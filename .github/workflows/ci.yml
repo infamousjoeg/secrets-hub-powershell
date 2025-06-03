@@ -1,0 +1,129 @@
+name: CI
+
+on:
+  #push:
+  #  branches: [ main, develop ]
+  #pull_request:
+  #  branches: [ main ]
+  release:
+    types: [ published ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }} with PowerShell ${{ matrix.powershell }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        powershell: ['5.1', '7.x']
+        exclude:
+          - os: ubuntu-latest
+            powershell: '5.1'
+          - os: macos-latest
+            powershell: '5.1'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PowerShell
+      if: matrix.powershell == '7.x'
+      uses: actions/setup-powershell@v1
+      with:
+        powershell-version: ${{ matrix.powershell }}
+
+    - name: Install dependencies
+      shell: pwsh
+      run: |
+        Set-PSRepository PSGallery -InstallationPolicy Trusted
+        Install-Module -Name Pester -Force -SkipPublisherCheck
+        Install-Module -Name IdentityCommand -Force
+        Install-Module -Name PSScriptAnalyzer -Force
+
+    - name: Run PSScriptAnalyzer
+      shell: pwsh
+      run: |
+        $Results = Invoke-ScriptAnalyzer -Path . -Recurse -ExcludeRule PSAvoidUsingPlainTextForPassword
+        if ($Results) {
+          $Results | ForEach-Object { Write-Error $_.Message }
+          exit 1
+        }
+
+    - name: Run Pester Tests
+      shell: pwsh
+      run: |
+        $Config = New-PesterConfiguration
+        $Config.Run.Path = './Tests/Unit'
+        $Config.CodeCoverage.Enabled = $true
+        $Config.CodeCoverage.Path = './Public', './Private'
+        $Config.CodeCoverage.OutputFormat = 'JaCoCo'
+        $Config.CodeCoverage.OutputPath = './coverage.xml'
+        $Config.TestResult.Enabled = $true
+        $Config.TestResult.OutputFormat = 'NUnitXml'
+        $Config.TestResult.OutputPath = './testresults.xml'
+        Invoke-Pester -Configuration $Config
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-${{ matrix.os }}-${{ matrix.powershell }}
+        path: |
+          testresults.xml
+          coverage.xml
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      if: matrix.os == 'ubuntu-latest' && matrix.powershell == '7.x'
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  publish:
+    name: Publish to PowerShell Gallery
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PowerShell
+      uses: actions/setup-powershell@v1
+
+    - name: Update module version
+      shell: pwsh
+      run: |
+        $Version = "${{ github.event.release.tag_name }}".TrimStart('v')
+        $ManifestPath = './CyberArk.SecretsHub.psd1'
+        $Content = Get-Content $ManifestPath -Raw
+        $Content = $Content -replace "ModuleVersion = '.*'", "ModuleVersion = '$Version'"
+        Set-Content -Path $ManifestPath -Value $Content
+
+    - name: Publish Module
+      shell: pwsh
+      env:
+        NUGET_API_KEY: ${{ secrets.POWERSHELL_GALLERY_API_KEY }}
+      run: |
+        Publish-Module -Path . -NuGetApiKey $env:NUGET_API_KEY -Repository PSGallery -Verbose
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
