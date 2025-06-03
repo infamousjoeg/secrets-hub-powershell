@@ -239,8 +239,8 @@ Invoke-Pester -Path .\Tests\Integration\ -Tag Integration
 
 ```powershell
 # Clone repository
-git clone https://github.com/cyberark/CyberArk.SecretsHub.git
-cd CyberArk.SecretsHub
+git clone https://github.com/infamousjoeg/secrets-hub-powershell.git
+cd secrets-hub-powershell
 
 # Install dependencies
 Install-Module -Name Pester -Force
