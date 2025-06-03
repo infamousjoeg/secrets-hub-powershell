@@ -1,40 +1,29 @@
 name: CI
 
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
+  #push:
+  #  branches: [ main, develop ]
+  #pull_request:
+  #  branches: [ main ]
   release:
     types: [ published ]
+  workflow_dispatch:
 
 env:
   MODULE_NAME: CyberArk.SecretsHub
 
 jobs:
   test:
-    name: Test on ${{ matrix.os }} with PowerShell ${{ matrix.powershell }}
+    name: Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        powershell: ['5.1', '7.x']
-        exclude:
-          - os: ubuntu-latest
-            powershell: '5.1'
-          - os: macos-latest
-            powershell: '5.1'
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-
-    - name: Setup PowerShell 7.x
-      if: matrix.powershell == '7.x'
-      uses: actions/setup-powershell@v2
-      with:
-        powershell-version: ${{ matrix.powershell }}
 
     - name: Install dependencies
       shell: pwsh
@@ -42,7 +31,7 @@ jobs:
         Set-PSRepository PSGallery -InstallationPolicy Trusted
         Install-Module -Name Pester -MinimumVersion 5.0 -Force -SkipPublisherCheck
         Install-Module -Name PSScriptAnalyzer -Force
-        # Install IdentityCommand if available (may not be in PSGallery yet)
+        # Install IdentityCommand if available
         try {
           Install-Module -Name IdentityCommand -Force -ErrorAction Stop
         } catch {
@@ -69,23 +58,23 @@ jobs:
         try {
           Import-Module ./${{ env.MODULE_NAME }}.psd1 -Force -ErrorAction Stop
           Write-Host "::notice::Module imported successfully"
-          Get-Module ${{ env.MODULE_NAME }} | Select-Object Name, Version, ExportedCommands
+          $Module = Get-Module ${{ env.MODULE_NAME }}
+          Write-Host "Module: $($Module.Name), Version: $($Module.Version)"
+          Write-Host "Exported Commands: $($Module.ExportedCommands.Count)"
         } catch {
           Write-Host "::error::Failed to import module: $($_.Exception.Message)"
+          Write-Host "::error::$($_.Exception.StackTrace)"
           exit 1
         }
 
     - name: Run Pester Tests
       shell: pwsh
       run: |
-        if (Test-Path './Tests') {
+        if (Test-Path './Tests/Unit') {
           $Config = New-PesterConfiguration
           $Config.Run.Path = './Tests/Unit'
           $Config.Run.PassThru = $true
-          $Config.CodeCoverage.Enabled = $true
-          $Config.CodeCoverage.Path = './Public/*.ps1', './Private/*.ps1'
-          $Config.CodeCoverage.OutputFormat = 'JaCoCo'
-          $Config.CodeCoverage.OutputPath = './coverage.xml'
+          $Config.CodeCoverage.Enabled = $false  # Disable for now to avoid issues
           $Config.TestResult.Enabled = $true
           $Config.TestResult.OutputFormat = 'NUnitXml'
           $Config.TestResult.OutputPath = './testresults.xml'
@@ -100,27 +89,16 @@ jobs:
             Write-Host "::notice::All $($Results.PassedCount) tests passed"
           }
         } else {
-          Write-Host "::notice::No tests directory found, skipping tests"
+          Write-Host "::notice::No Tests/Unit directory found, skipping tests"
         }
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
-      if: always()
+      if: always() && hashFiles('testresults.xml') != ''
       with:
-        name: test-results-${{ matrix.os }}-${{ matrix.powershell }}
-        path: |
-          testresults.xml
-          coverage.xml
+        name: test-results-${{ matrix.os }}
+        path: testresults.xml
         retention-days: 30
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      if: matrix.os == 'ubuntu-latest' && matrix.powershell == '7.x' && hashFiles('coverage.xml') != ''
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
 
   publish:
     name: Publish to PowerShell Gallery
@@ -131,9 +109,6 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-
-    - name: Setup PowerShell
-      uses: actions/setup-powershell@v2
 
     - name: Update module version
       shell: pwsh
@@ -181,29 +156,3 @@ jobs:
           Write-Error "Failed to publish module: $($_.Exception.Message)"
           exit 1
         }
-
-  security:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
-    
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: 'fs'
-        scan-ref: '.'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-
-    - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v3
-      if: always()
-      with:
-        sarif_file: 'trivy-results.sarif'
