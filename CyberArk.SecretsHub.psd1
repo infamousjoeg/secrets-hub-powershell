@@ -4,12 +4,12 @@
     GUID = 'a1b2c3d4-e5f6-7890-1234-567890abcdef'
     Author = 'Joe Garcia'
     CompanyName = 'CyberArk Software Ltd.'
-    Copyright = '(c) 2025 Joe Garcia. All rights reserved.'
+    Copyright = '(c) 2025 CyberArk Software Ltd. All rights reserved.'
     Description = 'PowerShell module for CyberArk Secrets Hub REST API automation'
-    
+
     PowerShellVersion = '5.1'
     CompatiblePSEditions = @('Desktop', 'Core')
-    
+
     RequiredModules = @(
         @{
             ModuleName = 'IdentityCommand'
@@ -17,37 +17,37 @@
             RequiredVersion = '2.0.0'
         }
     )
-    
+
     FunctionsToExport = @(
         # Secret Stores
         'Get-SecretStore', 'New-AwsSecretStore', 'New-AzureSecretStore', 'New-GcpSecretStore', 'New-PamSecretStore',
         'Set-AwsSecretStore', 'Set-AzureSecretStore', 'Set-GcpSecretStore', 'Set-PamSecretStore',
         'Remove-SecretStore', 'Enable-SecretStore', 'Disable-SecretStore', 'Test-SecretStoreConnection',
-        
+
         # Policies
         'Get-Policy', 'New-Policy', 'Remove-Policy', 'Enable-Policy', 'Disable-Policy',
         'Set-PolicySource', 'Set-PolicyTarget',
-        
+
         # Secrets (Beta)
         'Get-Secret', 'Get-SecretValue',
-        
+
         # Scans (Beta)
         'Get-Scan', 'Start-Scan',
-        
+
         # Filters
         'Get-Filter', 'New-Filter', 'Remove-Filter',
-        
+
         # Configuration
         'Get-Configuration', 'Set-Configuration',
-        
+
         # Connection Management
         'Connect-SecretsHub', 'Disconnect-SecretsHub'
     )
-    
+
     CmdletsToExport = @()
     VariablesToExport = @()
     AliasesToExport = @()
-    
+
     FileList = @(
         'CyberArk.SecretsHub.psm1',
         'Public/SecretStores/Get-SecretStore.ps1',
@@ -91,7 +91,7 @@
         'Types/CyberArk.SecretsHub.types.ps1xml',
         'Formats/CyberArk.SecretsHub.format.ps1xml'
     )
-    
+
     PrivateData = @{
         PSData = @{
             Tags = @('CyberArk', 'SecretsHub', 'SecretManagement', 'DevOps', 'Automation', 'Security', 'API')
@@ -104,7 +104,7 @@
             ExternalModuleDependencies = @('IdentityCommand')
         }
     }
-    
+
     HelpInfoURI = 'https://github.com/infamousjoeg/secrets-hub-powershell/blob/main/docs/'
     DefaultCommandPrefix = ''
 }
