@@ -14,7 +14,7 @@ param(
 # Build configuration
 $ModuleName = 'CyberArk.SecretsHub'
 $BuildDir = Join-Path $PSScriptRoot 'Build'
-$DocsDir = Join-Path $PSScriptRoot 'docs'
+#$DocsDir = Join-Path $PSScriptRoot 'docs'
 
 switch ($Task) {
     'Clean' {
