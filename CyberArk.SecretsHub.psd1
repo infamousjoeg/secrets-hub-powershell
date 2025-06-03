@@ -95,8 +95,8 @@
     PrivateData = @{
         PSData = @{
             Tags = @('CyberArk', 'SecretsHub', 'SecretManagement', 'DevOps', 'Automation', 'Security', 'API')
-            LicenseUri = 'https://github.com/infamousjoeg/CyberArk.SecretsHub/blob/main/LICENSE'
-            ProjectUri = 'https://github.com/infamousjoeg/CyberArk.SecretsHub'
+            LicenseUri = 'https://github.com/infamousjoeg/secrets-hub-powershell/blob/main/LICENSE'
+            ProjectUri = 'https://github.com/infamousjoeg/secrets-hub-powershell'
             IconUri = 'https://www.cyberark.com/wp-content/uploads/2021/01/cyberark-logo-dark.svg'
             ReleaseNotes = 'Initial release of CyberArk Secrets Hub PowerShell module'
             Prerelease = ''
@@ -105,6 +105,6 @@
         }
     }
     
-    HelpInfoURI = 'https://github.com/infamousjoeg/CyberArk.SecretsHub/blob/main/docs/'
+    HelpInfoURI = 'https://github.com/infamousjoeg/secrets-hub-powershell/blob/main/docs/'
     DefaultCommandPrefix = ''
 }
