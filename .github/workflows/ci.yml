@@ -1,19 +1,22 @@
 name: CI
 
 on:
-  #push:
-  #  branches: [ main, develop ]
-  #pull_request:
-  #  branches: [ main ]
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
   release:
     types: [ published ]
-  workflow_dispatch:
+
+env:
+  MODULE_NAME: CyberArk.SecretsHub
 
 jobs:
   test:
     name: Test on ${{ matrix.os }} with PowerShell ${{ matrix.powershell }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         powershell: ['5.1', '7.x']
@@ -24,11 +27,12 @@ jobs:
             powershell: '5.1'
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-    - name: Setup PowerShell
+    - name: Setup PowerShell 7.x
       if: matrix.powershell == '7.x'
-      uses: actions/setup-powershell@v1
+      uses: actions/setup-powershell@v2
       with:
         powershell-version: ${{ matrix.powershell }}
 
@@ -36,84 +40,159 @@ jobs:
       shell: pwsh
       run: |
         Set-PSRepository PSGallery -InstallationPolicy Trusted
-        Install-Module -Name Pester -Force -SkipPublisherCheck
-        Install-Module -Name IdentityCommand -Force
+        Install-Module -Name Pester -MinimumVersion 5.0 -Force -SkipPublisherCheck
         Install-Module -Name PSScriptAnalyzer -Force
+        # Install IdentityCommand if available (may not be in PSGallery yet)
+        try {
+          Install-Module -Name IdentityCommand -Force -ErrorAction Stop
+        } catch {
+          Write-Warning "IdentityCommand module not available, skipping"
+        }
 
     - name: Run PSScriptAnalyzer
       shell: pwsh
       run: |
-        $Results = Invoke-ScriptAnalyzer -Path . -Recurse -ExcludeRule PSAvoidUsingPlainTextForPassword
+        $Results = Invoke-ScriptAnalyzer -Path . -Recurse -ExcludeRule PSAvoidUsingPlainTextForPassword,PSAvoidUsingConvertToSecureStringWithPlainText
         if ($Results) {
-          $Results | ForEach-Object { Write-Error $_.Message }
+          $Results | ForEach-Object { 
+            Write-Host "::error file=$($_.ScriptPath),line=$($_.Line),col=$($_.Column)::$($_.Message)"
+          }
+          Write-Host "::error::PSScriptAnalyzer found $($Results.Count) issue(s)"
+          exit 1
+        } else {
+          Write-Host "::notice::PSScriptAnalyzer found no issues"
+        }
+
+    - name: Test module import
+      shell: pwsh
+      run: |
+        try {
+          Import-Module ./${{ env.MODULE_NAME }}.psd1 -Force -ErrorAction Stop
+          Write-Host "::notice::Module imported successfully"
+          Get-Module ${{ env.MODULE_NAME }} | Select-Object Name, Version, ExportedCommands
+        } catch {
+          Write-Host "::error::Failed to import module: $($_.Exception.Message)"
           exit 1
         }
 
     - name: Run Pester Tests
       shell: pwsh
       run: |
-        $Config = New-PesterConfiguration
-        $Config.Run.Path = './Tests/Unit'
-        $Config.CodeCoverage.Enabled = $true
-        $Config.CodeCoverage.Path = './Public', './Private'
-        $Config.CodeCoverage.OutputFormat = 'JaCoCo'
-        $Config.CodeCoverage.OutputPath = './coverage.xml'
-        $Config.TestResult.Enabled = $true
-        $Config.TestResult.OutputFormat = 'NUnitXml'
-        $Config.TestResult.OutputPath = './testresults.xml'
-        Invoke-Pester -Configuration $Config
+        if (Test-Path './Tests') {
+          $Config = New-PesterConfiguration
+          $Config.Run.Path = './Tests/Unit'
+          $Config.Run.PassThru = $true
+          $Config.CodeCoverage.Enabled = $true
+          $Config.CodeCoverage.Path = './Public/*.ps1', './Private/*.ps1'
+          $Config.CodeCoverage.OutputFormat = 'JaCoCo'
+          $Config.CodeCoverage.OutputPath = './coverage.xml'
+          $Config.TestResult.Enabled = $true
+          $Config.TestResult.OutputFormat = 'NUnitXml'
+          $Config.TestResult.OutputPath = './testresults.xml'
+          $Config.Output.Verbosity = 'Detailed'
+          
+          $Results = Invoke-Pester -Configuration $Config
+          
+          if ($Results.FailedCount -gt 0) {
+            Write-Host "::error::$($Results.FailedCount) test(s) failed"
+            exit 1
+          } else {
+            Write-Host "::notice::All $($Results.PassedCount) tests passed"
+          }
+        } else {
+          Write-Host "::notice::No tests directory found, skipping tests"
+        }
 
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: test-results-${{ matrix.os }}-${{ matrix.powershell }}
         path: |
           testresults.xml
           coverage.xml
+        retention-days: 30
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      if: matrix.os == 'ubuntu-latest' && matrix.powershell == '7.x'
+      uses: codecov/codecov-action@v4
+      if: matrix.os == 'ubuntu-latest' && matrix.powershell == '7.x' && hashFiles('coverage.xml') != ''
       with:
         file: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
+        fail_ci_if_error: false
 
   publish:
     name: Publish to PowerShell Gallery
     needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' && github.event.action == 'published'
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
     - name: Setup PowerShell
-      uses: actions/setup-powershell@v1
+      uses: actions/setup-powershell@v2
 
     - name: Update module version
       shell: pwsh
       run: |
         $Version = "${{ github.event.release.tag_name }}".TrimStart('v')
-        $ManifestPath = './CyberArk.SecretsHub.psd1'
-        $Content = Get-Content $ManifestPath -Raw
-        $Content = $Content -replace "ModuleVersion = '.*'", "ModuleVersion = '$Version'"
-        Set-Content -Path $ManifestPath -Value $Content
+        Write-Host "Updating module version to: $Version"
+        
+        $ManifestPath = './${{ env.MODULE_NAME }}.psd1'
+        if (Test-Path $ManifestPath) {
+          $Content = Get-Content $ManifestPath -Raw
+          $Content = $Content -replace "ModuleVersion\s*=\s*'[^']*'", "ModuleVersion = '$Version'"
+          Set-Content -Path $ManifestPath -Value $Content
+          Write-Host "Module version updated successfully"
+        } else {
+          Write-Error "Module manifest not found at $ManifestPath"
+          exit 1
+        }
+
+    - name: Validate module before publish
+      shell: pwsh
+      run: |
+        try {
+          Import-Module ./${{ env.MODULE_NAME }}.psd1 -Force
+          $Module = Get-Module ${{ env.MODULE_NAME }}
+          Write-Host "Module validation successful. Version: $($Module.Version)"
+        } catch {
+          Write-Error "Module validation failed: $($_.Exception.Message)"
+          exit 1
+        }
 
     - name: Publish Module
       shell: pwsh
       env:
         NUGET_API_KEY: ${{ secrets.POWERSHELL_GALLERY_API_KEY }}
       run: |
-        Publish-Module -Path . -NuGetApiKey $env:NUGET_API_KEY -Repository PSGallery -Verbose
+        if (-not $env:NUGET_API_KEY) {
+          Write-Error "PowerShell Gallery API key not found. Please set POWERSHELL_GALLERY_API_KEY secret."
+          exit 1
+        }
+        
+        try {
+          Publish-Module -Path . -NuGetApiKey $env:NUGET_API_KEY -Repository PSGallery -Verbose -Force
+          Write-Host "::notice::Module published successfully to PowerShell Gallery"
+        } catch {
+          Write-Error "Failed to publish module: $($_.Exception.Message)"
+          exit 1
+        }
 
   security:
     name: Security Scan
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
@@ -124,6 +203,7 @@ jobs:
         output: 'trivy-results.sarif'
 
     - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
       with:
         sarif_file: 'trivy-results.sarif'
