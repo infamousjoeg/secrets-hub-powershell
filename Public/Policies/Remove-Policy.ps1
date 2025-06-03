@@ -20,15 +20,15 @@ function Remove-Policy {
         [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
         [Alias('Id')]
         [string]$PolicyId,
-        
+
         [Parameter()]
         [switch]$Force
     )
-    
+
     begin {
         Test-SecretsHubConnection
     }
-    
+
     process {
         try {
             if ($Force -or $PSCmdlet.ShouldProcess($PolicyId, "Remove Policy")) {

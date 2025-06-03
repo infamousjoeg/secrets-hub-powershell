@@ -25,19 +25,19 @@ function New-Filter {
     param(
         [Parameter(Mandatory = $true)]
         [string]$StoreId,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$SafeName,
-        
+
         [Parameter()]
         [ValidateSet('PAM_SAFE')]
         [string]$Type = 'PAM_SAFE'
     )
-    
+
     begin {
         Test-SecretsHubConnection
     }
-    
+
     process {
         try {
             if ($PSCmdlet.ShouldProcess($SafeName, "Create Filter")) {
@@ -47,7 +47,7 @@ function New-Filter {
                         safeName = $SafeName
                     }
                 }
-                
+
                 $Uri = "api/secret-stores/$StoreId/filters"
                 $Result = Invoke-SecretsHubApi -Uri $Uri -Method POST -Body $Body
                 Write-Host "Successfully created filter for Safe: $SafeName" -ForegroundColor Green

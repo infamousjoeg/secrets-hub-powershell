@@ -18,17 +18,17 @@ function Disable-Policy {
         [Alias('Id')]
         [string]$PolicyId
     )
-    
+
     begin {
         Test-SecretsHubConnection
     }
-    
+
     process {
         try {
             if ($PSCmdlet.ShouldProcess($PolicyId, "Disable Policy")) {
                 $Uri = "api/policies/$PolicyId/state"
                 $Body = @{ action = "disable" }
-                
+
                 Invoke-SecretsHubApi -Uri $Uri -Method PUT -Body $Body
                 Write-Host "Successfully disabled policy: $PolicyId" -ForegroundColor Yellow
             }

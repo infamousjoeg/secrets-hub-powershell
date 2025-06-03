@@ -11,7 +11,7 @@ function ConvertTo-SecretsHubFilter {
         [Parameter(Mandatory = $true)]
         [string]$FilterExpression
     )
-    
+
     process {
         # Basic filter validation and conversion
         # This can be expanded based on specific filter requirements

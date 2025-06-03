@@ -22,11 +22,11 @@ function Set-PolicySource {
     param(
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
         [object]$InputObject,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$StoreId
     )
-    
+
     process {
         $InputObject.SourceStoreId = $StoreId
         return $InputObject

@@ -25,19 +25,19 @@ function Start-Scan {
     param(
         [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
         [string]$StoreId,
-        
+
         [Parameter()]
         [string]$Type = "secret-store",
-        
+
         [Parameter()]
         [string]$Id = "default"
     )
-    
+
     begin {
         Test-SecretsHubConnection
         Write-Warning "Start-Scan uses BETA APIs. Features may change without notice."
     }
-    
+
     process {
         try {
             if ($PSCmdlet.ShouldProcess($StoreId, "Start Scan")) {
@@ -47,7 +47,7 @@ function Start-Scan {
                         secretStoresIds = @($StoreId)
                     }
                 }
-                
+
                 $Result = Invoke-SecretsHubApi -Uri $Uri -Method POST -Body $Body -Beta
                 Write-Host "Successfully triggered scan for store: $StoreId" -ForegroundColor Green
                 return $Result

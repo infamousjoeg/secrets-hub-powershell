@@ -11,7 +11,7 @@ function Get-SecretsHubToken {
         [Parameter()]
         [PSCredential]$Credential
     )
-    
+
     process {
         try {
             # Try to use IdentityCommand session first
@@ -27,12 +27,12 @@ function Get-SecretsHubToken {
                     Write-Verbose "Could not retrieve IdentityCommand session: $($_.Exception.Message)"
                 }
             }
-            
+
             # If no IdentityCommand session, require credential
             if (-not $Credential) {
                 throw "No active IdentityCommand session found. Please provide credentials or establish IdentityCommand session."
             }
-            
+
             # Use provided credentials (implement based on your auth requirements)
             Write-Verbose "Using provided credentials for authentication"
             # This would integrate with your specific authentication mechanism

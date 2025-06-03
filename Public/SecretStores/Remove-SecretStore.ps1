@@ -23,15 +23,15 @@ function Remove-SecretStore {
         [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
         [Alias('Id')]
         [string]$StoreId,
-        
+
         [Parameter()]
         [switch]$Force
     )
-    
+
     begin {
         Test-SecretsHubConnection
     }
-    
+
     process {
         try {
             if ($Force -or $PSCmdlet.ShouldProcess($StoreId, "Remove Secret Store")) {

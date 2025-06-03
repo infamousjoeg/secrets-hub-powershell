@@ -21,23 +21,23 @@ function Test-SecretStoreConnection {
         [Alias('Id')]
         [string]$StoreId
     )
-    
+
     begin {
         Test-SecretsHubConnection
     }
-    
+
     process {
         try {
             $Uri = "api/secret-stores/$StoreId/status/connection"
             $Result = Invoke-SecretsHubApi -Uri $Uri -Method GET
-            
+
             if ($Result.status -eq 'OK') {
                 Write-Host "✓ Secret store connection test passed: $StoreId" -ForegroundColor Green
             }
             else {
                 Write-Warning "✗ Secret store connection test failed: $StoreId - $($Result.message)"
             }
-            
+
             return $Result
         }
         catch {

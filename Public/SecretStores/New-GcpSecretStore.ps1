@@ -40,34 +40,34 @@ function New-GcpSecretStore {
     param(
         [Parameter(Mandatory = $true)]
         [string]$Name,
-        
+
         [Parameter()]
         [string]$Description,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$ProjectName,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$ProjectNumber,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$WorkloadIdentityPoolId,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$PoolProviderId,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$ServiceAccountEmail,
-        
+
         [Parameter()]
         [ValidateSet('ENABLED', 'DISABLED')]
         [string]$State = 'ENABLED'
     )
-    
+
     begin {
         Test-SecretsHubConnection
     }
-    
+
     process {
         try {
             if ($PSCmdlet.ShouldProcess($Name, "Create GCP Secret Store")) {
@@ -86,11 +86,11 @@ function New-GcpSecretStore {
                         }
                     }
                 }
-                
+
                 if ($Description) {
                     $Body.description = $Description
                 }
-                
+
                 $Result = Invoke-SecretsHubApi -Uri "api/secret-stores" -Method POST -Body $Body
                 Write-Host "Successfully created GCP secret store: $Name" -ForegroundColor Green
                 return $Result

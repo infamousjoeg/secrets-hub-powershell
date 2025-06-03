@@ -38,31 +38,31 @@ function New-Policy {
     param(
         [Parameter(Mandatory = $true)]
         [string]$Name,
-        
+
         [Parameter()]
         [string]$Description,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$SourceStoreId,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$TargetStoreId,
-        
+
         [Parameter(ParameterSetName = 'FilterObject')]
         [object]$FilterData,
-        
+
         [Parameter(ParameterSetName = 'SafeName')]
         [string]$SafeName,
-        
+
         [Parameter()]
         [ValidateSet('default', 'password_only_plain_text')]
         [string]$Transformation = 'default'
     )
-    
+
     begin {
         Test-SecretsHubConnection
     }
-    
+
     process {
         try {
             if ($PSCmdlet.ShouldProcess($Name, "Create Sync Policy")) {
@@ -82,7 +82,7 @@ function New-Policy {
                 else {
                     throw "Either SafeName or FilterData must be provided"
                 }
-                
+
                 $Body = @{
                     name = $Name
                     source = @{ id = $SourceStoreId }
@@ -92,11 +92,11 @@ function New-Policy {
                         predefined = $Transformation
                     }
                 }
-                
+
                 if ($Description) {
                     $Body.description = $Description
                 }
-                
+
                 $Result = Invoke-SecretsHubApi -Uri "api/policies" -Method POST -Body $Body
                 Write-Host "Successfully created policy: $Name" -ForegroundColor Green
                 return $Result

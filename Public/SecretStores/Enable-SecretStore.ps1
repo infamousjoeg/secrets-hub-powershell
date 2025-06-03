@@ -21,17 +21,17 @@ function Enable-SecretStore {
         [Alias('Id')]
         [string]$StoreId
     )
-    
+
     begin {
         Test-SecretsHubConnection
     }
-    
+
     process {
         try {
             if ($PSCmdlet.ShouldProcess($StoreId, "Enable Secret Store")) {
                 $Uri = "api/secret-stores/$StoreId/state"
                 $Body = @{ action = "enable" }
-                
+
                 Invoke-SecretsHubApi -Uri $Uri -Method PUT -Body $Body
                 Write-Host "Successfully enabled secret store: $StoreId" -ForegroundColor Green
             }

@@ -11,7 +11,7 @@ Disconnect-SecretsHub
 function Disconnect-SecretsHub {
     [CmdletBinding()]
     param()
-    
+
     process {
         if ($script:SecretsHubSession) {
             Write-Verbose "Disconnecting from Secrets Hub"

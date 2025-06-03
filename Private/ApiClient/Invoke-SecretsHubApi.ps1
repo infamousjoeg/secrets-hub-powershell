@@ -10,38 +10,38 @@ function Invoke-SecretsHubApi {
     param(
         [Parameter(Mandatory = $true)]
         [string]$Uri,
-        
+
         [Parameter()]
         [string]$Method = 'GET',
-        
+
         [Parameter()]
         [hashtable]$Body,
-        
+
         [Parameter()]
         [hashtable]$QueryParameters,
-        
+
         [Parameter()]
         [hashtable]$AdditionalHeaders,
-        
+
         [Parameter()]
         [switch]$Beta,
-        
+
         [Parameter()]
         [int]$MaxRetries = 3,
-        
+
         [Parameter()]
         [int]$RetryDelay = 1
     )
-    
+
     process {
         if (-not $script:SecretsHubSession) {
             throw "Not connected to Secrets Hub. Use Connect-SecretsHub first."
         }
-        
+
         try {
             # Build full URI
             $FullUri = $script:SecretsHubSession.BaseUrl + $Uri.TrimStart('/')
-            
+
             # Add query parameters
             if ($QueryParameters) {
                 $QueryString = ($QueryParameters.GetEnumerator() | ForEach-Object {
@@ -49,22 +49,22 @@ function Invoke-SecretsHubApi {
                 }) -join '&'
                 $FullUri += "?$QueryString"
             }
-            
+
             # Prepare headers
             $Headers = $script:SecretsHubSession.Headers.Clone()
-            
+
             # Add beta header if needed
             if ($Beta) {
                 $Headers['Accept'] = 'application/x.secretshub.beta+json'
             }
-            
+
             # Add additional headers
             if ($AdditionalHeaders) {
                 foreach ($Header in $AdditionalHeaders.GetEnumerator()) {
                     $Headers[$Header.Key] = $Header.Value
                 }
             }
-            
+
             # Prepare request parameters
             $RequestParams = @{
                 Uri = $FullUri
@@ -72,13 +72,13 @@ function Invoke-SecretsHubApi {
                 Headers = $Headers
                 ErrorAction = 'Stop'
             }
-            
+
             # Add body if provided
             if ($Body) {
                 $RequestParams.Body = ($Body | ConvertTo-Json -Depth 10 -Compress)
                 Write-Verbose "Request body: $($RequestParams.Body)"
             }
-            
+
             # Retry logic
             $Attempt = 0
             do {
@@ -93,7 +93,7 @@ function Invoke-SecretsHubApi {
                     if ($_.Exception.Response) {
                         $StatusCode = [int]$_.Exception.Response.StatusCode
                     }
-                    
+
                     # Retry on transient errors
                     if ($Attempt -lt $MaxRetries -and ($StatusCode -eq 429 -or $StatusCode -ge 500)) {
                         Write-Warning "API call failed with status $StatusCode, retrying in $RetryDelay seconds..."
@@ -101,7 +101,7 @@ function Invoke-SecretsHubApi {
                         $RetryDelay *= 2  # Exponential backoff
                         continue
                     }
-                    
+
                     # Parse error response if available
                     $ErrorDetails = $null
                     try {
@@ -114,7 +114,7 @@ function Invoke-SecretsHubApi {
                     catch {
                         # Ignore error parsing errors
                     }
-                    
+
                     # Throw with enhanced error information
                     if ($ErrorDetails) {
                         throw "API Error [$($ErrorDetails.code)]: $($ErrorDetails.message) - $($ErrorDetails.description)"

@@ -18,17 +18,17 @@ function Disable-SecretStore {
         [Alias('Id')]
         [string]$StoreId
     )
-    
+
     begin {
         Test-SecretsHubConnection
     }
-    
+
     process {
         try {
             if ($PSCmdlet.ShouldProcess($StoreId, "Disable Secret Store")) {
                 $Uri = "api/secret-stores/$StoreId/state"
                 $Body = @{ action = "disable" }
-                
+
                 Invoke-SecretsHubApi -Uri $Uri -Method PUT -Body $Body
                 Write-Host "Successfully disabled secret store: $StoreId" -ForegroundColor Yellow
             }

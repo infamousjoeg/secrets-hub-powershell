@@ -22,15 +22,15 @@ function Get-Filter {
     param(
         [Parameter(Mandatory = $true)]
         [string]$StoreId,
-        
+
         [Parameter(ParameterSetName = 'ById')]
         [string]$FilterId
     )
-    
+
     begin {
         Test-SecretsHubConnection
     }
-    
+
     process {
         try {
             if ($FilterId) {
@@ -39,7 +39,7 @@ function Get-Filter {
             else {
                 $Uri = "api/secret-stores/$StoreId/filters"
             }
-            
+
             $Result = Invoke-SecretsHubApi -Uri $Uri -Method GET
             return $Result
         }

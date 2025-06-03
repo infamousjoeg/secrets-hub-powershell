@@ -37,32 +37,32 @@ function New-AwsSecretStore {
     param(
         [Parameter(Mandatory = $true)]
         [string]$Name,
-        
+
         [Parameter()]
         [string]$Description,
-        
+
         [Parameter(Mandatory = $true)]
         [ValidatePattern('^\d{12}$')]
         [string]$AccountId,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$AccountAlias,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$Region,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$RoleName,
-        
+
         [Parameter()]
         [ValidateSet('ENABLED', 'DISABLED')]
         [string]$State = 'ENABLED'
     )
-    
+
     begin {
         Test-SecretsHubConnection
     }
-    
+
     process {
         try {
             if ($PSCmdlet.ShouldProcess($Name, "Create AWS Secret Store")) {
@@ -77,11 +77,11 @@ function New-AwsSecretStore {
                         roleName = $RoleName
                     }
                 }
-                
+
                 if ($Description) {
                     $Body.description = $Description
                 }
-                
+
                 $Result = Invoke-SecretsHubApi -Uri "api/secret-stores" -Method POST -Body $Body
                 Write-Host "Successfully created AWS secret store: $Name" -ForegroundColor Green
                 return $Result

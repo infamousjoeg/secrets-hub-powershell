@@ -14,11 +14,11 @@ Shows secrets source, authentication identities, and sync settings.
 function Get-Configuration {
     [CmdletBinding()]
     param()
-    
+
     begin {
         Test-SecretsHubConnection
     }
-    
+
     process {
         try {
             $Result = Invoke-SecretsHubApi -Uri "api/configuration" -Method GET

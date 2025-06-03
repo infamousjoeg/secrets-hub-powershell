@@ -20,15 +20,15 @@ function Set-AzureSecretStore {
         [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)]
         [Alias('Id')]
         [string]$StoreId,
-        
+
         [Parameter(Mandatory = $true)]
         [hashtable]$Data
     )
-    
+
     begin {
         Test-SecretsHubConnection
     }
-    
+
     process {
         try {
             if ($PSCmdlet.ShouldProcess($StoreId, "Update Azure Secret Store")) {

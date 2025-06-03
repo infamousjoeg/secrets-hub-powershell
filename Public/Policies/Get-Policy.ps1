@@ -25,19 +25,19 @@ function Get-Policy {
     param(
         [Parameter(Mandatory = $true, ParameterSetName = 'ById')]
         [string]$PolicyId,
-        
+
         [Parameter(Mandatory = $true, ParameterSetName = 'List')]
         [string]$Filter,
-        
+
         [Parameter()]
         [ValidateSet('REGULAR', 'EXTEND', 'METADATA')]
         [string]$Projection = 'REGULAR'
     )
-    
+
     begin {
         Test-SecretsHubConnection
     }
-    
+
     process {
         try {
             if ($PSCmdlet.ParameterSetName -eq 'ById') {
@@ -52,7 +52,7 @@ function Get-Policy {
                     filter = $Filter
                     projection = $Projection
                 }
-                
+
                 $Result = Invoke-SecretsHubApi -Uri $Uri -Method GET -QueryParameters $QueryParams
                 return $Result.policies
             }

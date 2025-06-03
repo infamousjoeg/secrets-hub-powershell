@@ -22,12 +22,12 @@ function Get-SecretValue {
         [Alias('Id')]
         [string]$SecretId
     )
-    
+
     begin {
         Test-SecretsHubConnection
         Write-Warning "Get-SecretValue uses BETA APIs and returns sensitive data. Use with extreme caution."
     }
-    
+
     process {
         try {
             $Uri = "api/secrets/$SecretId/value"

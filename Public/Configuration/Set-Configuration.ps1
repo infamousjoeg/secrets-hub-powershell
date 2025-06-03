@@ -21,11 +21,11 @@ function Set-Configuration {
         [ValidateRange(1, 730)]
         [int]$SecretValidity
     )
-    
+
     begin {
         Test-SecretsHubConnection
     }
-    
+
     process {
         try {
             if ($PSCmdlet.ShouldProcess("Secrets Hub Configuration", "Update Secret Validity to $SecretValidity days")) {
@@ -34,7 +34,7 @@ function Set-Configuration {
                         secretValidity = $SecretValidity
                     }
                 }
-                
+
                 Invoke-SecretsHubApi -Uri "api/configuration" -Method PATCH -Body $Body
                 Write-Host "Successfully updated configuration: Secret validity set to $SecretValidity days" -ForegroundColor Green
             }

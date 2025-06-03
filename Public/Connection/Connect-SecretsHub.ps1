@@ -32,21 +32,21 @@ function Connect-SecretsHub {
     param(
         [Parameter(Mandatory = $true, ParameterSetName = 'Subdomain')]
         [string]$Subdomain,
-        
+
         [Parameter(Mandatory = $true, ParameterSetName = 'BaseUrl')]
         [string]$BaseUrl,
-        
+
         [Parameter()]
         [PSCredential]$Credential,
-        
+
         [Parameter()]
         [switch]$Force
     )
-    
+
     begin {
         Write-Verbose "Starting connection to Secrets Hub"
     }
-    
+
     process {
         try {
             # Check for existing connection
@@ -54,16 +54,16 @@ function Connect-SecretsHub {
                 Write-Warning "Already connected to Secrets Hub. Use -Force to create a new connection."
                 return $script:SecretsHubSession
             }
-            
+
             # Get base URL
             if ($PSCmdlet.ParameterSetName -eq 'Subdomain') {
                 $BaseUrl = Get-SecretsHubBaseUrl -Subdomain $Subdomain
             }
-            
+
             # Initialize connection
             $Session = Initialize-SecretsHubConnection -BaseUrl $BaseUrl -Credential $Credential
             $script:SecretsHubSession = $Session
-            
+
             Write-Host "Successfully connected to Secrets Hub: $($Session.BaseUrl)" -ForegroundColor Green
             return $Session
         }

@@ -25,19 +25,19 @@ function Remove-Filter {
     param(
         [Parameter(Mandatory = $true)]
         [string]$StoreId,
-        
+
         [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)]
         [Alias('Id')]
         [string]$FilterId,
-        
+
         [Parameter()]
         [switch]$Force
     )
-    
+
     begin {
         Test-SecretsHubConnection
     }
-    
+
     process {
         try {
             if ($Force -or $PSCmdlet.ShouldProcess($FilterId, "Remove Filter")) {

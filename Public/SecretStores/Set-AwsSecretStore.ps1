@@ -32,50 +32,50 @@ function Set-AwsSecretStore {
         [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)]
         [Alias('Id')]
         [string]$StoreId,
-        
+
         [Parameter(ParameterSetName = 'Object')]
         [hashtable]$Data,
-        
+
         [Parameter(ParameterSetName = 'Properties')]
         [string]$Name,
-        
+
         [Parameter(ParameterSetName = 'Properties')]
         [string]$Description,
-        
+
         [Parameter(ParameterSetName = 'Properties')]
         [string]$AccountAlias,
-        
+
         [Parameter(ParameterSetName = 'Properties')]
         [string]$RoleName
     )
-    
+
     begin {
         Test-SecretsHubConnection
     }
-    
+
     process {
         try {
             if ($PSCmdlet.ShouldProcess($StoreId, "Update AWS Secret Store")) {
                 $Body = @{}
-                
+
                 if ($PSCmdlet.ParameterSetName -eq 'Object') {
                     $Body = $Data
                 }
                 else {
                     if ($Name) { $Body.name = $Name }
                     if ($Description) { $Body.description = $Description }
-                    
+
                     if ($AccountAlias -or $RoleName) {
                         $Body.data = @{}
                         if ($AccountAlias) { $Body.data.accountAlias = $AccountAlias }
                         if ($RoleName) { $Body.data.roleName = $RoleName }
                     }
                 }
-                
+
                 if ($Body.Count -eq 0) {
                     throw "No update parameters provided"
                 }
-                
+
                 $Uri = "api/secret-stores/$StoreId"
                 $Result = Invoke-SecretsHubApi -Uri $Uri -Method PATCH -Body $Body
                 Write-Host "Successfully updated AWS secret store: $StoreId" -ForegroundColor Green

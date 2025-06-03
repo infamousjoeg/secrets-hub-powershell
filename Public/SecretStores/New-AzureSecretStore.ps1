@@ -55,50 +55,50 @@ function New-AzureSecretStore {
     param(
         [Parameter(Mandatory = $true)]
         [string]$Name,
-        
+
         [Parameter()]
         [string]$Description,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$VaultUrl,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$ClientId,
-        
+
         [Parameter(Mandatory = $true)]
         [SecureString]$ClientSecret,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$TenantId,
-        
+
         [Parameter()]
         [string]$SubscriptionId,
-        
+
         [Parameter()]
         [string]$SubscriptionName,
-        
+
         [Parameter()]
         [string]$ResourceGroupName,
-        
+
         [Parameter()]
         [ValidateSet('PUBLIC', 'CONNECTOR')]
         [string]$ConnectionType = 'PUBLIC',
-        
+
         [Parameter()]
         [string]$ConnectorId,
-        
+
         [Parameter()]
         [string]$ConnectorPoolId,
-        
+
         [Parameter()]
         [ValidateSet('ENABLED', 'DISABLED')]
         [string]$State = 'ENABLED'
     )
-    
+
     begin {
         Test-SecretsHubConnection
     }
-    
+
     process {
         try {
             if ($PSCmdlet.ShouldProcess($Name, "Create Azure Secret Store")) {
@@ -106,11 +106,11 @@ function New-AzureSecretStore {
                 $PlainSecret = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
                     [Runtime.InteropServices.Marshal]::SecureStringToBSTR($ClientSecret)
                 )
-                
+
                 $ConnectionConfig = @{
                     connectionType = $ConnectionType
                 }
-                
+
                 if ($ConnectionType -eq 'CONNECTOR') {
                     if (-not $ConnectorId) {
                         throw "ConnectorId is required when ConnectionType is CONNECTOR"
@@ -120,7 +120,7 @@ function New-AzureSecretStore {
                         $ConnectionConfig.connectorPoolId = $ConnectorPoolId
                     }
                 }
-                
+
                 $Body = @{
                     type = "AZURE_AKV"
                     name = $Name
@@ -133,12 +133,12 @@ function New-AzureSecretStore {
                         connectionConfig = $ConnectionConfig
                     }
                 }
-                
+
                 if ($Description) { $Body.description = $Description }
                 if ($SubscriptionId) { $Body.data.subscriptionId = $SubscriptionId }
                 if ($SubscriptionName) { $Body.data.subscriptionName = $SubscriptionName }
                 if ($ResourceGroupName) { $Body.data.resourceGroupName = $ResourceGroupName }
-                
+
                 $Result = Invoke-SecretsHubApi -Uri "api/secret-stores" -Method POST -Body $Body
                 Write-Host "Successfully created Azure secret store: $Name" -ForegroundColor Green
                 return $Result

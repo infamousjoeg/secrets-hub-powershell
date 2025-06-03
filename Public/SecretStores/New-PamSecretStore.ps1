@@ -46,38 +46,38 @@ function New-PamSecretStore {
     param(
         [Parameter(Mandatory = $true)]
         [string]$Name,
-        
+
         [Parameter()]
         [string]$Description,
-        
+
         [Parameter(Mandatory = $true)]
         [ValidateSet('PAM_SELF_HOSTED', 'PAM_PCLOUD')]
         [string]$Type,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$Url,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$UserName,
-        
+
         [Parameter()]
         [SecureString]$Password,
-        
+
         [Parameter()]
         [string]$ConnectorId,
-        
+
         [Parameter()]
         [string]$ConnectorPoolId,
-        
+
         [Parameter()]
         [ValidateSet('ENABLED', 'DISABLED')]
         [string]$State = 'ENABLED'
     )
-    
+
     begin {
         Test-SecretsHubConnection
     }
-    
+
     process {
         try {
             if ($PSCmdlet.ShouldProcess($Name, "Create PAM Secret Store")) {
@@ -85,33 +85,33 @@ function New-PamSecretStore {
                     url = $Url
                     userName = $UserName
                 }
-                
+
                 # Add password for Self-Hosted
                 if ($Type -eq 'PAM_SELF_HOSTED') {
                     if (-not $Password) {
                         throw "Password is required for PAM_SELF_HOSTED type"
                     }
-                    
+
                     $PlainPassword = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
                         [Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
                     )
                     $Data.password = $PlainPassword
-                    
+
                     if ($ConnectorId) { $Data.connectorId = $ConnectorId }
                     if ($ConnectorPoolId) { $Data.connectorPoolId = $ConnectorPoolId }
                 }
-                
+
                 $Body = @{
                     type = $Type
                     name = $Name
                     state = $State
                     data = $Data
                 }
-                
+
                 if ($Description) {
                     $Body.description = $Description
                 }
-                
+
                 $Result = Invoke-SecretsHubApi -Uri "api/secret-stores" -Method POST -Body $Body
                 Write-Host "Successfully created PAM secret store: $Name" -ForegroundColor Green
                 return $Result

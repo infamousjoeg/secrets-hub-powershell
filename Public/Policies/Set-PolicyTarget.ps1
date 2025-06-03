@@ -22,11 +22,11 @@ function Set-PolicyTarget {
     param(
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
         [object]$InputObject,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$StoreId
     )
-    
+
     process {
         $InputObject.TargetStoreId = $StoreId
         return $InputObject

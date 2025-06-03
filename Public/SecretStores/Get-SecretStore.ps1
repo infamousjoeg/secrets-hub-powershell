@@ -34,23 +34,23 @@ function Get-SecretStore {
     param(
         [Parameter(Mandatory = $true, ParameterSetName = 'ById', ValueFromPipeline = $true)]
         [string]$StoreId,
-        
+
         [Parameter(ParameterSetName = 'List')]
         [ValidateSet('SECRETS_SOURCE', 'SECRETS_TARGET')]
         [string]$Behavior = 'SECRETS_TARGET',
-        
+
         [Parameter(ParameterSetName = 'List')]
         [string]$Filter,
-        
+
         [Parameter(ParameterSetName = 'All')]
         [switch]$All
     )
-    
+
     begin {
         Test-SecretsHubConnection
         Write-Verbose "Getting secret stores"
     }
-    
+
     process {
         try {
             if ($PSCmdlet.ParameterSetName -eq 'ById') {
@@ -69,11 +69,11 @@ function Get-SecretStore {
                 $QueryParams = @{
                     behavior = $Behavior
                 }
-                
+
                 if ($Filter) {
                     $QueryParams.filter = $Filter
                 }
-                
+
                 $Result = Invoke-SecretsHubApi -Uri $Uri -Method GET -QueryParameters $QueryParams
                 return $Result.secretStores
             }

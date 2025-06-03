@@ -10,21 +10,21 @@ function Initialize-SecretsHubConnection {
     param(
         [Parameter(Mandatory = $true)]
         [string]$BaseUrl,
-        
+
         [Parameter()]
         [PSCredential]$Credential
     )
-    
+
     process {
         try {
             # Normalize base URL
             if (-not $BaseUrl.EndsWith('/')) {
                 $BaseUrl += '/'
             }
-            
+
             # Get authentication token
             $Token = Get-SecretsHubToken -Credential $Credential
-            
+
             # Create session object
             $Session = [PSCustomObject]@{
                 BaseUrl = $BaseUrl
@@ -37,7 +37,7 @@ function Initialize-SecretsHubConnection {
                 Connected = $true
                 ConnectedAt = Get-Date
             }
-            
+
             # Test connection
             try {
                 $TestResult = Invoke-RestMethod -Uri "${BaseUrl}api/info" -Headers $Session.Headers -Method GET -ErrorAction Stop
@@ -46,7 +46,7 @@ function Initialize-SecretsHubConnection {
             catch {
                 Write-Warning "Connection test failed, but proceeding with connection"
             }
-            
+
             return $Session
         }
         catch {

@@ -11,27 +11,27 @@ function Get-SecretsHubBaseUrl {
         [Parameter(Mandatory = $true)]
         [string]$Subdomain
     )
-    
+
     process {
         try {
             $DiscoveryUrl = "https://platform-discovery.cyberark.cloud/api/v2/services/subdomain/$Subdomain"
             Write-Verbose "Discovering base URL for subdomain: $Subdomain"
-            
+
             $Response = Invoke-RestMethod -Uri $DiscoveryUrl -Method GET -ErrorAction Stop
-            
+
             # Look for Secrets Hub service
             $SecretsHubService = $Response.services | Where-Object { $_.name -eq 'secretshub' }
-            
+
             if (-not $SecretsHubService) {
                 throw "Secrets Hub service not found for subdomain: $Subdomain"
             }
-            
+
             $BaseUrl = $SecretsHubService.url
-            
+
             if (-not $BaseUrl.EndsWith('/')) {
                 $BaseUrl += '/'
             }
-            
+
             Write-Verbose "Discovered base URL: $BaseUrl"
             return $BaseUrl
         }

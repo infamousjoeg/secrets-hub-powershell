@@ -31,28 +31,28 @@ function Get-Secret {
     param(
         [Parameter()]
         [string]$Filter,
-        
+
         [Parameter()]
         [ValidateSet('REGULAR', 'EXTEND')]
         [string]$Projection = 'REGULAR',
-        
+
         [Parameter()]
         [ValidateRange(0, 150000)]
         [int]$Offset = 0,
-        
+
         [Parameter()]
         [ValidateRange(1, 1000)]
         [int]$Limit = 100,
-        
+
         [Parameter()]
         [string]$Sort = "storeName ASC"
     )
-    
+
     begin {
         Test-SecretsHubConnection
         Write-Warning "Get-Secret uses BETA APIs. Features may change without notice."
     }
-    
+
     process {
         try {
             $QueryParams = @{
@@ -61,11 +61,11 @@ function Get-Secret {
                 limit = $Limit
                 sort = $Sort
             }
-            
+
             if ($Filter) {
                 $QueryParams.filter = $Filter
             }
-            
+
             $Result = Invoke-SecretsHubApi -Uri "api/secrets" -Method GET -QueryParameters $QueryParams -Beta
             return $Result.secrets
         }

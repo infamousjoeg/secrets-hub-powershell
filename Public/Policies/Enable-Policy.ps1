@@ -18,17 +18,17 @@ function Enable-Policy {
         [Alias('Id')]
         [string]$PolicyId
     )
-    
+
     begin {
         Test-SecretsHubConnection
     }
-    
+
     process {
         try {
             if ($PSCmdlet.ShouldProcess($PolicyId, "Enable Policy")) {
                 $Uri = "api/policies/$PolicyId/state"
                 $Body = @{ action = "enable" }
-                
+
                 Invoke-SecretsHubApi -Uri $Uri -Method PUT -Body $Body
                 Write-Host "Successfully enabled policy: $PolicyId" -ForegroundColor Green
             }
