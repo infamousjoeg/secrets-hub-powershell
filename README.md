@@ -2,7 +2,7 @@
 
 [![PowerShell Gallery](https://img.shields.io/powershellgallery/v/CyberArk.SecretsHub.svg)](https://www.powershellgallery.com/packages/CyberArk.SecretsHub)
 [![PowerShell Gallery Downloads](https://img.shields.io/powershellgallery/dt/CyberArk.SecretsHub.svg)](https://www.powershellgallery.com/packages/CyberArk.SecretsHub)
-[![Build Status](https://github.com/cyberark/CyberArk.SecretsHub/workflows/CI/badge.svg)](https://github.com/cyberark/CyberArk.SecretsHub/actions)
+[![Build Status](https://github.com/infamousjoeg/secrets-hub-powershell/workflows/CI/badge.svg)](https://github.com/infamousjoeg/secrets-hub-powershell/actions)
 
 PowerShell module for CyberArk Secrets Hub REST API automation, enabling DevOps teams to manage secret stores, sync policies, and secret operations programmatically.
 
