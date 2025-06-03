@@ -1,0 +1,42 @@
+# Build artifacts
+Build/
+*.nupkg
+
+# Test results
+TestResults/
+testresults.xml
+coverage.xml
+*.trx
+
+# PowerShell
+*.ps1xml~
+*.psd1~
+*.psm1~
+
+# IDE files
+.vscode/
+.vs/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Local configuration
+appsettings.local.json
+config.local.ps1
+
+# Sensitive data
+*.key
+*.cert
+*.pfx
+secrets.json
