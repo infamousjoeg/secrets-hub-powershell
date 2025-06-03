@@ -36,7 +36,7 @@ function Set-Configuration {
                 }
 
                 Invoke-SecretsHubApi -Uri "api/configuration" -Method PATCH -Body $Body
-                Write-Host "Successfully updated configuration: Secret validity set to $SecretValidity days" -ForegroundColor Green
+                Write-Information "Successfully updated configuration: Secret validity set to $SecretValidity days" -InformationAction Continue
             }
         }
         catch {

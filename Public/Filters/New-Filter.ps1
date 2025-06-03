@@ -50,7 +50,7 @@ function New-Filter {
 
                 $Uri = "api/secret-stores/$StoreId/filters"
                 $Result = Invoke-SecretsHubApi -Uri $Uri -Method POST -Body $Body
-                Write-Host "Successfully created filter for Safe: $SafeName" -ForegroundColor Green
+                Write-Information "Successfully created filter for Safe: $SafeName" -InformationAction Continue
                 return $Result
             }
         }

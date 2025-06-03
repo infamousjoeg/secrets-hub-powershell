@@ -78,7 +78,7 @@ function Set-AwsSecretStore {
 
                 $Uri = "api/secret-stores/$StoreId"
                 $Result = Invoke-SecretsHubApi -Uri $Uri -Method PATCH -Body $Body
-                Write-Host "Successfully updated AWS secret store: $StoreId" -ForegroundColor Green
+                Write-Information "Successfully updated AWS secret store: $StoreId" -InformationAction Continue
                 return $Result
             }
         }

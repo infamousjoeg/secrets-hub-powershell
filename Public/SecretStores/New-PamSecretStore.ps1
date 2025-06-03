@@ -113,7 +113,7 @@ function New-PamSecretStore {
                 }
 
                 $Result = Invoke-SecretsHubApi -Uri "api/secret-stores" -Method POST -Body $Body
-                Write-Host "Successfully created PAM secret store: $Name" -ForegroundColor Green
+                Write-Information "Successfully created PAM secret store: $Name" -InformationAction Continue
                 return $Result
             }
         }

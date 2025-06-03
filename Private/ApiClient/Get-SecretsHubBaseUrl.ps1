@@ -7,6 +7,7 @@ Uses platform discovery endpoint to find the appropriate base URL.
 #>
 function Get-SecretsHubBaseUrl {
     [CmdletBinding()]
+    [OutputType([System.String])]
     param(
         [Parameter(Mandatory = $true)]
         [string]$Subdomain
@@ -39,6 +40,7 @@ function Get-SecretsHubBaseUrl {
             # Fallback to standard URL format
             $FallbackUrl = "https://$Subdomain.secretshub.cyberark.cloud/"
             Write-Warning "Platform discovery failed, using fallback URL: $FallbackUrl"
+            Write-Error "Discovery failed: $($_.Exception.Message)" -ErrorAction Continue
             return $FallbackUrl
         }
     }

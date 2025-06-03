@@ -98,7 +98,7 @@ function New-Policy {
                 }
 
                 $Result = Invoke-SecretsHubApi -Uri "api/policies" -Method POST -Body $Body
-                Write-Host "Successfully created policy: $Name" -ForegroundColor Green
+                Write-Information "Successfully created policy: $Name" -InformationAction Continue
                 return $Result
             }
         }

@@ -34,7 +34,7 @@ function Set-GcpSecretStore {
             if ($PSCmdlet.ShouldProcess($StoreId, "Update GCP Secret Store")) {
                 $Uri = "api/secret-stores/$StoreId"
                 $Result = Invoke-SecretsHubApi -Uri $Uri -Method PATCH -Body $Data
-                Write-Host "Successfully updated GCP secret store: $StoreId" -ForegroundColor Green
+                Write-Information "Successfully updated GCP secret store: $StoreId" -InformationAction Continue
                 return $Result
             }
         }

@@ -30,7 +30,7 @@ function Disable-SecretStore {
                 $Body = @{ action = "disable" }
 
                 Invoke-SecretsHubApi -Uri $Uri -Method PUT -Body $Body
-                Write-Host "Successfully disabled secret store: $StoreId" -ForegroundColor Yellow
+                Write-Warning "Successfully disabled secret store: $StoreId"
             }
         }
         catch {

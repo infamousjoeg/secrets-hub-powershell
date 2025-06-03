@@ -30,7 +30,7 @@ function Enable-Policy {
                 $Body = @{ action = "enable" }
 
                 Invoke-SecretsHubApi -Uri $Uri -Method PUT -Body $Body
-                Write-Host "Successfully enabled policy: $PolicyId" -ForegroundColor Green
+                Write-Information "Successfully enabled policy: $PolicyId" -InformationAction Continue
             }
         }
         catch {

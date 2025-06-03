@@ -92,7 +92,7 @@ function New-GcpSecretStore {
                 }
 
                 $Result = Invoke-SecretsHubApi -Uri "api/secret-stores" -Method POST -Body $Body
-                Write-Host "Successfully created GCP secret store: $Name" -ForegroundColor Green
+                Write-Information "Successfully created GCP secret store: $Name" -InformationAction Continue
                 return $Result
             }
         }

@@ -7,6 +7,7 @@ Helper function for filter conversion and validation.
 #>
 function ConvertTo-SecretsHubFilter {
     [CmdletBinding()]
+    [OutputType([System.String])]
     param(
         [Parameter(Mandatory = $true)]
         [string]$FilterExpression

@@ -43,7 +43,7 @@ function Remove-Filter {
             if ($Force -or $PSCmdlet.ShouldProcess($FilterId, "Remove Filter")) {
                 $Uri = "api/secret-stores/$StoreId/filters/$FilterId"
                 Invoke-SecretsHubApi -Uri $Uri -Method DELETE
-                Write-Host "Successfully removed filter: $FilterId" -ForegroundColor Yellow
+                Write-Warning "Successfully removed filter: $FilterId"
             }
         }
         catch {

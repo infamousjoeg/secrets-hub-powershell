@@ -34,7 +34,7 @@ function Remove-Policy {
             if ($Force -or $PSCmdlet.ShouldProcess($PolicyId, "Remove Policy")) {
                 $Uri = "api/policies/$PolicyId"
                 $Result = Invoke-SecretsHubApi -Uri $Uri -Method DELETE
-                Write-Host "Successfully removed policy: $PolicyId" -ForegroundColor Yellow
+                Write-Warning "Successfully removed policy: $PolicyId"
                 return $Result
             }
         }

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Tests the connection status of a secret store.
 
@@ -32,7 +32,7 @@ function Test-SecretStoreConnection {
             $Result = Invoke-SecretsHubApi -Uri $Uri -Method GET
 
             if ($Result.status -eq 'OK') {
-                Write-Host "✓ Secret store connection test passed: $StoreId" -ForegroundColor Green
+                Write-Information "✓ Secret store connection test passed: $StoreId" -InformationAction Continue
             }
             else {
                 Write-Warning "✗ Secret store connection test failed: $StoreId - $($Result.message)"

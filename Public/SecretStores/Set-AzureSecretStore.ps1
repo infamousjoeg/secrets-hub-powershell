@@ -34,7 +34,7 @@ function Set-AzureSecretStore {
             if ($PSCmdlet.ShouldProcess($StoreId, "Update Azure Secret Store")) {
                 $Uri = "api/secret-stores/$StoreId"
                 $Result = Invoke-SecretsHubApi -Uri $Uri -Method PATCH -Body $Data
-                Write-Host "Successfully updated Azure secret store: $StoreId" -ForegroundColor Green
+                Write-Information "Successfully updated Azure secret store: $StoreId" -InformationAction Continue
                 return $Result
             }
         }

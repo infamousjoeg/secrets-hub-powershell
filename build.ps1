@@ -18,14 +18,14 @@ $BuildDir = Join-Path $PSScriptRoot 'Build'
 
 switch ($Task) {
     'Clean' {
-        Write-Host "Cleaning build directory..." -ForegroundColor Yellow
+        Write-Warning "Cleaning build directory..."
         if (Test-Path $BuildDir) {
             Remove-Item $BuildDir -Recurse -Force
         }
     }
 
     'Build' {
-        Write-Host "Building module..." -ForegroundColor Green
+        Write-Information "Building module..." -InformationAction Continue
 
         # Clean first
         & $PSCommandPath -Task Clean
@@ -49,24 +49,24 @@ switch ($Task) {
             $Source = Join-Path $PSScriptRoot $File
             if (Test-Path $Source) {
                 Copy-Item $Source -Destination $ModuleBuildDir -Recurse -Force
-                Write-Host "  Copied: $File" -ForegroundColor Gray
+                Write-Information "  Copied: $File" -InformationAction Continue
             }
         }
 
         # Update version if specified
         if ($Version) {
-            Write-Host "Updating version to $Version..." -ForegroundColor Cyan
+            Write-Information "Updating version to $Version..." -InformationAction Continue
             $ManifestPath = Join-Path $ModuleBuildDir 'CyberArk.SecretsHub.psd1'
             $Content = Get-Content $ManifestPath -Raw
             $Content = $Content -replace "ModuleVersion = '.*'", "ModuleVersion = '$Version'"
             Set-Content -Path $ManifestPath -Value $Content
         }
 
-        Write-Host "Build completed: $ModuleBuildDir" -ForegroundColor Green
+        Write-Information "Build completed: $ModuleBuildDir" -InformationAction Continue
     }
 
     'Test' {
-        Write-Host "Running tests..." -ForegroundColor Green
+        Write-Information "Running tests..." -InformationAction Continue
 
         # Install Pester if not available
         if (-not (Get-Module -Name Pester -ListAvailable)) {
@@ -87,11 +87,11 @@ switch ($Task) {
             throw "Tests failed: $($Results.FailedCount) failed out of $($Results.TotalCount)"
         }
 
-        Write-Host "All tests passed!" -ForegroundColor Green
+        Write-Information "All tests passed!" -InformationAction Continue
     }
 
     'Publish' {
-        Write-Host "Publishing module..." -ForegroundColor Green
+        Write-Information "Publishing module..." -InformationAction Continue
 
         if (-not $ApiKey) {
             throw "ApiKey parameter is required for publishing"
@@ -104,6 +104,6 @@ switch ($Task) {
         $ModulePath = Join-Path $BuildDir $ModuleName
         Publish-Module -Path $ModulePath -NuGetApiKey $ApiKey -Repository PSGallery -Verbose
 
-        Write-Host "Module published successfully!" -ForegroundColor Green
+        Write-Information "Module published successfully!" -InformationAction Continue
     }
 }

@@ -30,7 +30,7 @@ function Disable-Policy {
                 $Body = @{ action = "disable" }
 
                 Invoke-SecretsHubApi -Uri $Uri -Method PUT -Body $Body
-                Write-Host "Successfully disabled policy: $PolicyId" -ForegroundColor Yellow
+                Write-Warning "Successfully disabled policy: $PolicyId"
             }
         }
         catch {

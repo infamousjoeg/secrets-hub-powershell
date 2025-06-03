@@ -18,7 +18,8 @@ New-Policy -Name "Test" | Set-PolicySource -StoreId "store-123" | Set-PolicyTarg
 Part of the policy builder pipeline pattern.
 #>
 function Set-PolicyTarget {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
+    [OutputType([System.Object])]
     param(
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
         [object]$InputObject,
@@ -28,7 +29,9 @@ function Set-PolicyTarget {
     )
 
     process {
-        $InputObject.TargetStoreId = $StoreId
-        return $InputObject
+        if ($PSCmdlet.ShouldProcess($StoreId, "Set Policy Target")) {
+            $InputObject.TargetStoreId = $StoreId
+            return $InputObject
+        }
     }
 }

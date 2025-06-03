@@ -140,7 +140,7 @@ function New-AzureSecretStore {
                 if ($ResourceGroupName) { $Body.data.resourceGroupName = $ResourceGroupName }
 
                 $Result = Invoke-SecretsHubApi -Uri "api/secret-stores" -Method POST -Body $Body
-                Write-Host "Successfully created Azure secret store: $Name" -ForegroundColor Green
+                Write-Information "Successfully created Azure secret store: $Name" -InformationAction Continue
                 return $Result
             }
         }

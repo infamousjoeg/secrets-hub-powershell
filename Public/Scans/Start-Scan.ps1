@@ -49,7 +49,7 @@ function Start-Scan {
                 }
 
                 $Result = Invoke-SecretsHubApi -Uri $Uri -Method POST -Body $Body -Beta
-                Write-Host "Successfully triggered scan for store: $StoreId" -ForegroundColor Green
+                Write-Information "Successfully triggered scan for store: $StoreId" -InformationAction Continue
                 return $Result
             }
         }

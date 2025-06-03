@@ -37,7 +37,7 @@ function Remove-SecretStore {
             if ($Force -or $PSCmdlet.ShouldProcess($StoreId, "Remove Secret Store")) {
                 $Uri = "api/secret-stores/$StoreId"
                 Invoke-SecretsHubApi -Uri $Uri -Method DELETE
-                Write-Host "Successfully removed secret store: $StoreId" -ForegroundColor Yellow
+                Write-Warning "Successfully removed secret store: $StoreId"
             }
         }
         catch {

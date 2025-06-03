@@ -33,7 +33,7 @@ function Enable-SecretStore {
                 $Body = @{ action = "enable" }
 
                 Invoke-SecretsHubApi -Uri $Uri -Method PUT -Body $Body
-                Write-Host "Successfully enabled secret store: $StoreId" -ForegroundColor Green
+                Write-Information "Successfully enabled secret store: $StoreId" -InformationAction Continue
             }
         }
         catch {

@@ -64,7 +64,7 @@ function Connect-SecretsHub {
             $Session = Initialize-SecretsHubConnection -BaseUrl $BaseUrl -Credential $Credential
             $script:SecretsHubSession = $Session
 
-            Write-Host "Successfully connected to Secrets Hub: $($Session.BaseUrl)" -ForegroundColor Green
+            Write-Information "Successfully connected to Secrets Hub: $($Session.BaseUrl)" -InformationAction Continue
             return $Session
         }
         catch {

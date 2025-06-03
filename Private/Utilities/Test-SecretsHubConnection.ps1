@@ -7,6 +7,7 @@ Validates that a connection exists and is still valid.
 #>
 function Test-SecretsHubConnection {
     [CmdletBinding()]
+    [OutputType([System.Boolean])]
     param()
 
     process {

@@ -83,7 +83,7 @@ function New-AwsSecretStore {
                 }
 
                 $Result = Invoke-SecretsHubApi -Uri "api/secret-stores" -Method POST -Body $Body
-                Write-Host "Successfully created AWS secret store: $Name" -ForegroundColor Green
+                Write-Information "Successfully created AWS secret store: $Name" -InformationAction Continue
                 return $Result
             }
         }

@@ -16,7 +16,7 @@ function Disconnect-SecretsHub {
         if ($script:SecretsHubSession) {
             Write-Verbose "Disconnecting from Secrets Hub"
             $script:SecretsHubSession = $null
-            Write-Host "Disconnected from Secrets Hub" -ForegroundColor Yellow
+            Write-Warning "Disconnected from Secrets Hub"
         }
         else {
             Write-Warning "No active Secrets Hub connection found"
