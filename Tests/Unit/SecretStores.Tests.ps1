@@ -4,10 +4,10 @@ BeforeAll {
     # Import module for testing
     $ModuleRoot = Split-Path -Parent $PSScriptRoot
     $ModuleRoot = Split-Path -Parent $ModuleRoot
-    
+
     # Remove any existing module to ensure clean import
     Remove-Module CyberArk.SecretsHub -Force -ErrorAction SilentlyContinue
-    
+
     # Import the module
     Import-Module "$ModuleRoot\CyberArk.SecretsHub.psd1" -Force
 
@@ -23,7 +23,7 @@ BeforeAll {
         Connected = $true
         ConnectedAt = Get-Date
     }
-    
+
     # Set the module session variable for testing
     & (Get-Module CyberArk.SecretsHub) { $script:SecretsHubSession = $using:TestSession }
 }
@@ -73,7 +73,7 @@ Describe "New-AwsSecretStore" {
     BeforeEach {
         # Ensure test session is set
         & (Get-Module CyberArk.SecretsHub) { $script:SecretsHubSession = $using:TestSession }
-        
+
         # Mock the API call
         Mock -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi {
             return @{
@@ -84,7 +84,7 @@ Describe "New-AwsSecretStore" {
                 data = $Body.data
             }
         }
-        
+
         # Mock Write-Host to avoid output during tests
         Mock -ModuleName CyberArk.SecretsHub Write-Host { }
         Mock -ModuleName CyberArk.SecretsHub Write-Information { }
@@ -112,7 +112,7 @@ Describe "New-AwsSecretStore" {
             Should -Invoke -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi -Times 1 -ParameterFilter {
                 $Uri -eq "api/secret-stores" -and $Method -eq "POST" -and $Body.name -eq "TestStore"
             }
-            
+
             # Verify return value
             $Result.name | Should -Be "TestStore"
             $Result.type | Should -Be "AWS_ASM"
@@ -132,7 +132,7 @@ Describe "Get-SecretStore" {
     BeforeEach {
         # Ensure test session is set
         & (Get-Module CyberArk.SecretsHub) { $script:SecretsHubSession = $using:TestSession }
-        
+
         # Mock the API calls
         Mock -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi {
             if ($Uri -like "*store-*") {
@@ -163,10 +163,10 @@ Describe "Get-SecretStore" {
     Context "Get by ID" {
         It "Should retrieve specific secret store by ID" {
             $Store = Get-SecretStore -StoreId "store-12345678-1234-1234-1234-123456789012"
-            
+
             $Store.id | Should -Be "store-12345678-1234-1234-1234-123456789012"
             $Store.name | Should -Be "TestStore"
-            
+
             Should -Invoke -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi -Times 1 -ParameterFilter {
                 $Uri -eq "api/secret-stores/store-12345678-1234-1234-1234-123456789012"
             }
@@ -176,10 +176,10 @@ Describe "Get-SecretStore" {
     Context "List stores" {
         It "Should list stores with default behavior" {
             $Stores = Get-SecretStore
-            
+
             $Stores | Should -HaveCount 1
             $Stores[0].name | Should -Be "TestStore"
-            
+
             Should -Invoke -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi -Times 1 -ParameterFilter {
                 $Uri -eq "api/secret-stores" -and $QueryParameters.behavior -eq "SECRETS_TARGET"
             }
@@ -187,7 +187,7 @@ Describe "Get-SecretStore" {
 
         It "Should filter by behavior type" {
             Get-SecretStore -Behavior "SECRETS_SOURCE"
-            
+
             Should -Invoke -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi -Times 1 -ParameterFilter {
                 $QueryParameters.behavior -eq "SECRETS_SOURCE"
             }
