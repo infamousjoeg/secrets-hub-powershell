@@ -46,11 +46,11 @@ Describe "Connect-SecretsHub" {
     Context "Connection Logic" -Tag "Integration" {
         BeforeEach {
             # Mock the private functions that Connect-SecretsHub uses
-            Mock -ModuleName CyberArk.SecretsHub Get-SecretsHubBaseUrl { 
-                return "https://test.secretshub.cyberark.cloud/" 
+            Mock -ModuleName CyberArk.SecretsHub Get-SecretsHubBaseUrl {
+                return "https://test.secretshub.cyberark.cloud/"
             }
-            Mock -ModuleName CyberArk.SecretsHub Initialize-SecretsHubConnection { 
-                return $script:TestSession 
+            Mock -ModuleName CyberArk.SecretsHub Initialize-SecretsHubConnection {
+                return $script:TestSession
             }
             Mock -ModuleName CyberArk.SecretsHub Write-Host { }
         }
