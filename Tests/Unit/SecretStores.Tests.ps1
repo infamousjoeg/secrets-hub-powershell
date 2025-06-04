@@ -11,8 +11,8 @@ BeforeAll {
     # Import the module
     Import-Module "$ModuleRoot\CyberArk.SecretsHub.psd1" -Force
 
-    # Mock session for testing - this needs to be in script scope
-    $script:TestSession = [PSCustomObject]@{
+    # Create test session object
+    $Global:TestSession = [PSCustomObject]@{
         BaseUrl = "https://test.secretshub.cyberark.cloud/"
         Token = "mock-token"
         Headers = @{
@@ -23,9 +23,14 @@ BeforeAll {
         Connected = $true
         ConnectedAt = Get-Date
     }
+}
 
-    # Set the module session variable for testing
-    & (Get-Module CyberArk.SecretsHub) { $script:SecretsHubSession = $using:TestSession }
+# Helper function to set module session
+function Set-TestSession {
+    $Module = Get-Module CyberArk.SecretsHub
+    if ($Module) {
+        & $Module { $script:SecretsHubSession = $Global:TestSession }
+    }
 }
 
 Describe "Connect-SecretsHub" {
@@ -45,14 +50,14 @@ Describe "Connect-SecretsHub" {
 
     Context "Connection Logic" -Tag "Integration" {
         BeforeEach {
-            # Mock the private functions that Connect-SecretsHub uses
+            # Mock the private functions
             Mock -ModuleName CyberArk.SecretsHub Get-SecretsHubBaseUrl {
                 return "https://test.secretshub.cyberark.cloud/"
             }
             Mock -ModuleName CyberArk.SecretsHub Initialize-SecretsHubConnection {
-                return $script:TestSession
+                return $Global:TestSession
             }
-            Mock -ModuleName CyberArk.SecretsHub Write-Host { }
+            Mock -ModuleName CyberArk.SecretsHub Write-Information { }
         }
 
         It "Should connect using subdomain discovery" {
@@ -71,8 +76,8 @@ Describe "Connect-SecretsHub" {
 
 Describe "New-AwsSecretStore" {
     BeforeEach {
-        # Ensure test session is set
-        & (Get-Module CyberArk.SecretsHub) { $script:SecretsHubSession = $using:TestSession }
+        # Set up test session
+        Set-TestSession
 
         # Mock the API call
         Mock -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi {
@@ -85,8 +90,7 @@ Describe "New-AwsSecretStore" {
             }
         }
 
-        # Mock Write-Host to avoid output during tests
-        Mock -ModuleName CyberArk.SecretsHub Write-Host { }
+        # Mock output functions
         Mock -ModuleName CyberArk.SecretsHub Write-Information { }
     }
 
@@ -130,8 +134,8 @@ Describe "New-AwsSecretStore" {
 
 Describe "Get-SecretStore" {
     BeforeEach {
-        # Ensure test session is set
-        & (Get-Module CyberArk.SecretsHub) { $script:SecretsHubSession = $using:TestSession }
+        # Set up test session
+        Set-TestSession
 
         # Mock the API calls
         Mock -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi {
