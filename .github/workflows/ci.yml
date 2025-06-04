@@ -162,7 +162,8 @@ jobs:
         }
         
         try {
-          Publish-Module -Path . -NuGetApiKey $env:NUGET_API_KEY -Repository PSGallery -Verbose -Force
+          # Publish using the manifest file directly
+          Publish-Module -Path ./CyberArk.SecretsHub.psd1 -NuGetApiKey $env:NUGET_API_KEY -Repository PSGallery -Verbose -Force
           Write-Host "::notice::Module published successfully to PowerShell Gallery"
         } catch {
           Write-Error "Failed to publish module: $($_.Exception.Message)"
