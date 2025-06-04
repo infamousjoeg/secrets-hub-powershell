@@ -151,6 +151,23 @@ jobs:
           exit 1
         }
 
+    - name: Prepare module for publish
+      shell: pwsh
+      run: |
+        # Create a proper module directory structure
+        $ModuleDir = "./publish/CyberArk.SecretsHub"
+        New-Item -Path $ModuleDir -ItemType Directory -Force
+        
+        # Copy all necessary files
+        Copy-Item "./CyberArk.SecretsHub.psd1" -Destination $ModuleDir
+        Copy-Item "./CyberArk.SecretsHub.psm1" -Destination $ModuleDir
+        Copy-Item "./Public" -Destination $ModuleDir -Recurse -Force
+        Copy-Item "./Private" -Destination $ModuleDir -Recurse -Force
+        Copy-Item "./Types" -Destination $ModuleDir -Recurse -Force
+        Copy-Item "./Formats" -Destination $ModuleDir -Recurse -Force
+        Copy-Item "./README.md" -Destination $ModuleDir -Force
+        Copy-Item "./LICENSE" -Destination $ModuleDir -Force
+
     - name: Publish Module
       shell: pwsh
       env:
@@ -162,8 +179,7 @@ jobs:
         }
         
         try {
-          # Publish using the manifest file directly
-          Publish-Module -Path ./CyberArk.SecretsHub.psd1 -NuGetApiKey $env:NUGET_API_KEY -Repository PSGallery -Verbose -Force
+          Publish-Module -Path "./publish/CyberArk.SecretsHub" -NuGetApiKey $env:NUGET_API_KEY -Repository PSGallery -Verbose -Force
           Write-Host "::notice::Module published successfully to PowerShell Gallery"
         } catch {
           Write-Error "Failed to publish module: $($_.Exception.Message)"
