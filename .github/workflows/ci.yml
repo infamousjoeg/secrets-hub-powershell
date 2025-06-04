@@ -127,21 +127,21 @@ jobs:
           exit 1
         }
 
-    - name: Debug manifest format
-      shell: pwsh
-      run: |
-        Write-Host "Current RequiredModules line:"
-        Get-Content ./CyberArk.SecretsHub.psd1 | Where-Object { $_ -match "RequiredModules" }
-
     - name: Validate module before publish
       shell: pwsh
       run: |
         # Temporarily remove IdentityCommand requirement for CI validation
         $ManifestPath = './CyberArk.SecretsHub.psd1'
         $Content = Get-Content $ManifestPath -Raw
-        $Content = $Content -replace "RequiredModules = @\('IdentityCommand'\)", "RequiredModules = @()"
-        Set-Content -Path $ManifestPath -Value $Content
-
+        
+        # Remove the entire RequiredModules section (multiline)
+        $Content = $Content -replace "RequiredModules = @\([^)]*\)", "RequiredModules = @()"
+        
+        Set-Content -Path $ManifestPath -Value $Content -NoNewline
+        
+        Write-Host "Updated manifest - RequiredModules section:"
+        Get-Content $ManifestPath | Where-Object { $_ -match "RequiredModules" } | Select-Object -First 3
+        
         try {
           Import-Module ./CyberArk.SecretsHub.psd1 -Force
           $Module = Get-Module CyberArk.SecretsHub
