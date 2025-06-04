@@ -12,7 +12,7 @@ BeforeAll {
     Import-Module "$ModuleRoot\CyberArk.SecretsHub.psd1" -Force
 
     # Create test session object
-    $Global:TestSession = [PSCustomObject]@{
+    $script:TestSession = [PSCustomObject]@{
         BaseUrl = "https://test.secretshub.cyberark.cloud/"
         Token = "mock-token"
         Headers = @{
@@ -26,10 +26,10 @@ BeforeAll {
 }
 
 # Helper function to set module session
-function Set-TestSession {
+function Initialize-TestSession {
     $Module = Get-Module CyberArk.SecretsHub
     if ($Module) {
-        & $Module { $script:SecretsHubSession = $Global:TestSession }
+        & $Module { $script:SecretsHubSession = $script:TestSession }
     }
 }
 
@@ -55,7 +55,7 @@ Describe "Connect-SecretsHub" {
                 return "https://test.secretshub.cyberark.cloud/"
             }
             Mock -ModuleName CyberArk.SecretsHub Initialize-SecretsHubConnection {
-                return $Global:TestSession
+                return $script:TestSession
             }
             Mock -ModuleName CyberArk.SecretsHub Write-Information { }
         }
@@ -77,7 +77,7 @@ Describe "Connect-SecretsHub" {
 Describe "New-AwsSecretStore" {
     BeforeEach {
         # Set up test session
-        Set-TestSession
+        Initialize-TestSession
 
         # Mock the API call
         Mock -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi {
@@ -135,7 +135,7 @@ Describe "New-AwsSecretStore" {
 Describe "Get-SecretStore" {
     BeforeEach {
         # Set up test session
-        Set-TestSession
+        Initialize-TestSession
 
         # Mock the API calls
         Mock -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi {
