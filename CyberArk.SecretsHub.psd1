@@ -13,8 +13,7 @@
     RequiredModules = @(
         @{
             ModuleName = 'IdentityCommand'
-            ModuleVersion = '2.0.0'
-            RequiredVersion = '2.0.0'
+            ModuleVersion = '0.3.61'
         }
     )
 
