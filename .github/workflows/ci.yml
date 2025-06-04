@@ -127,6 +127,12 @@ jobs:
           exit 1
         }
 
+    - name: Debug manifest format
+      shell: pwsh
+      run: |
+        Write-Host "Current RequiredModules line:"
+        Get-Content ./CyberArk.SecretsHub.psd1 | Where-Object { $_ -match "RequiredModules" }
+
     - name: Validate module before publish
       shell: pwsh
       run: |
