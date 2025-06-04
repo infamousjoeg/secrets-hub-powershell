@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.0.0] - 2025-01-01
+## [1.0.0] - 2025-06-04
 
 ### Added
 - Initial release of CyberArk.SecretsHub PowerShell module
@@ -85,5 +85,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contributing guidelines
 - Security disclosure policy
 
-[Unreleased]: https://github.com/cyberark/CyberArk.SecretsHub/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/cyberark/CyberArk.SecretsHub/releases/tag/v1.0.0
+[Unreleased]: https://github.com/infamousjoeg/secrets-hub-powershell/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/infamousjoeg/secrets-hub-powershell/releases/tag/v1.0.0
