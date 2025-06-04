@@ -112,7 +112,8 @@ function Invoke-SecretsHubApi {
                         }
                     }
                     catch {
-                        # Ignore error parsing errors
+                        # Log error parsing failure but continue with original error
+                        Write-Verbose "Failed to parse error response: $($_.Exception.Message)"
                     }
 
                     # Throw with enhanced error information

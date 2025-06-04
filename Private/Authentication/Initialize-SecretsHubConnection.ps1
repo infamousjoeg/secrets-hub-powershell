@@ -40,7 +40,7 @@ function Initialize-SecretsHubConnection {
 
             # Test connection
             try {
-                $TestResult = Invoke-RestMethod -Uri "${BaseUrl}api/info" -Headers $Session.Headers -Method GET -ErrorAction Stop
+                Invoke-RestMethod -Uri "${BaseUrl}api/info" -Headers $Session.Headers -Method GET -ErrorAction Stop
                 Write-Verbose "Connection test successful"
             }
             catch {

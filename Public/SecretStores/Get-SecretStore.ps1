@@ -58,8 +58,8 @@ function Get-SecretStore {
                 $Result = Invoke-SecretsHubApi -Uri $Uri -Method GET
                 return $Result
             }
-            elseif ($PSCmdlet.ParameterSetName -eq 'All') {
-                # Get both source and target stores
+            elseif ($PSCmdlet.ParameterSetName -eq 'All' -and $All) {
+                # Get both source and target stores when -All switch is used
                 $SourceStores = Get-SecretStore -Behavior 'SECRETS_SOURCE'
                 $TargetStores = Get-SecretStore -Behavior 'SECRETS_TARGET'
                 return @($SourceStores) + @($TargetStores)
