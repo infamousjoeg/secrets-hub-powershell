@@ -58,7 +58,7 @@ Describe "Connect-SecretsHub" {
             }
 
             Mock -ModuleName CyberArk.SecretsHub Initialize-SecretsHubConnection {
-                param($BaseUrl, [PSCredential]$Credential)
+                param($BaseUrl)
                 # Return a consistent test session
                 return [PSCustomObject]@{
                     BaseUrl = $BaseUrl
@@ -74,11 +74,9 @@ Describe "Connect-SecretsHub" {
             }
 
             Mock -ModuleName CyberArk.SecretsHub Write-Information {
-                param($MessageData, $InformationAction)
                 # Mock the information output
             }
             Mock -ModuleName CyberArk.SecretsHub Write-Warning {
-                param($Message)
                 # Mock the warning output
             }
         }
@@ -129,7 +127,7 @@ Describe "New-AwsSecretStore" {
 
         # Mock the API call with consistent response
         Mock -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi {
-            param($Uri, $Method, $Body, $QueryParameters, $AdditionalHeaders, $Beta, $MaxRetries, $RetryDelay)
+            param($Uri, $Method, $Body)
 
             return @{
                 id = "store-12345678-1234-1234-1234-123456789012"
@@ -215,7 +213,7 @@ Describe "Get-SecretStore" {
 
         # Mock the API calls with detailed responses
         Mock -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi {
-            param($Uri, $Method, $Body, $QueryParameters, $AdditionalHeaders, $Beta, $MaxRetries, $RetryDelay)
+            param($Uri, $QueryParameters)
 
             # Return response based on URI pattern and query parameters
             if ($Uri -match 'api/secret-stores/store-.*') {
