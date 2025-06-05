@@ -80,8 +80,8 @@ Describe "Connect-SecretsHub" {
 Describe "New-AwsSecretStore" {
     BeforeEach {
         # Mock Test-SecretsHubConnection to simulate active connection
-        Mock -ModuleName CyberArk.SecretsHub Test-SecretsHubConnection { 
-            return $true 
+        Mock -ModuleName CyberArk.SecretsHub Test-SecretsHubConnection {
+            return $true
         }
 
         # Mock the session check in the module
@@ -159,7 +159,7 @@ Describe "Get-SecretStore" {
         }
 
         # Alternative approach: Mock the entire connection test
-        Mock -ModuleName CyberArk.SecretsHub Test-SecretsHubConnection { 
+        Mock -ModuleName CyberArk.SecretsHub Test-SecretsHubConnection {
             # Just return without throwing, simulating a valid connection
             return
         }
@@ -170,9 +170,9 @@ Describe "Get-SecretStore" {
         if ($Module) {
             try {
                 # Set the session variable directly in the module's scope
-                & $Module { 
+                & $Module {
                     param($TestSession)
-                    $script:SecretsHubSession = $TestSession 
+                    $script:SecretsHubSession = $TestSession
                 } $script:TestSession
             } catch {
                 Write-Warning "Could not set session in module scope: $_"
@@ -244,8 +244,8 @@ Describe "Get-SecretStore" {
             $Stores[0].name | Should -Be "TestStore"
 
             Should -Invoke -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi -Times 1 -ParameterFilter {
-                $Uri -eq "api/secret-stores" -and 
-                $QueryParameters.behavior -eq "SECRETS_TARGET" -and 
+                $Uri -eq "api/secret-stores" -and
+                $QueryParameters.behavior -eq "SECRETS_TARGET" -and
                 $Method -eq "GET"
             }
         }
@@ -256,8 +256,8 @@ Describe "Get-SecretStore" {
             $Stores | Should -Not -BeNullOrEmpty
 
             Should -Invoke -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi -Times 1 -ParameterFilter {
-                $Uri -eq "api/secret-stores" -and 
-                $QueryParameters.behavior -eq "SECRETS_SOURCE" -and 
+                $Uri -eq "api/secret-stores" -and
+                $QueryParameters.behavior -eq "SECRETS_SOURCE" -and
                 $Method -eq "GET"
             }
         }
@@ -294,7 +294,7 @@ Describe "Get-SecretStore" {
 
             $AllStores | Should -Not -BeNullOrEmpty
             $AllStores.Count | Should -Be 2
-            
+
             # Should call both source and target APIs
             Should -Invoke -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi -Times 1 -ParameterFilter {
                 $QueryParameters.behavior -eq "SECRETS_SOURCE"
