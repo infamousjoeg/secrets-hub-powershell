@@ -9,10 +9,10 @@ Write-Verbose "Loading CyberArk.SecretsHub module from: $PSScriptRoot"
 try {
     $PrivatePath = Join-Path $PSScriptRoot "Private"
     $PublicPath = Join-Path $PSScriptRoot "Public"
-    
+
     Write-Verbose "Private functions path: $PrivatePath"
     Write-Verbose "Public functions path: $PublicPath"
-    
+
     # Validate paths exist
     if (-not (Test-Path $PrivatePath)) {
         throw "Private functions directory not found: $PrivatePath"
@@ -20,13 +20,13 @@ try {
     if (-not (Test-Path $PublicPath)) {
         throw "Public functions directory not found: $PublicPath"
     }
-    
+
     $PrivateFunctions = Get-ChildItem -Path $PrivatePath -Recurse -Filter "*.ps1" -ErrorAction Stop
     $PublicFunctions = Get-ChildItem -Path $PublicPath -Recurse -Filter "*.ps1" -ErrorAction Stop
-    
+
     Write-Verbose "Found $($PrivateFunctions.Count) private functions"
     Write-Verbose "Found $($PublicFunctions.Count) public functions"
-    
+
     # Import private functions first (dependencies)
     foreach ($Function in $PrivateFunctions) {
         try {
@@ -38,7 +38,7 @@ try {
             throw
         }
     }
-    
+
     # Then import public functions
     foreach ($Function in $PublicFunctions) {
         try {

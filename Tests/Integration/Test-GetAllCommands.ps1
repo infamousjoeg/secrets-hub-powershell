@@ -74,7 +74,7 @@ function New-TestResult {
         [object]$ErrorDetails = $null,
         [object]$SampleData = $null
     )
-    
+
     return [PSCustomObject]@{
         Command = $Command
         ParameterSet = $ParameterSet
@@ -96,16 +96,16 @@ function Invoke-TestCommand {
         [scriptblock]$ScriptBlock,
         [switch]$Beta
     )
-    
+
     $StartTime = Get-Date
-    
+
     try {
         if ($Beta) {
             Write-Host "  [BETA] Testing $CommandName ($ParameterSetName)..." -ForegroundColor Yellow
         } else {
             Write-Host "  Testing $CommandName ($ParameterSetName)..." -ForegroundColor Cyan
         }
-        
+
         $Result = & $ScriptBlock
         $EndTime = Get-Date
         $Duration = ($EndTime - $StartTime).TotalMilliseconds
