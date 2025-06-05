@@ -127,7 +127,7 @@ Describe "New-AwsSecretStore" {
 
         # Mock the API call with consistent response
         Mock -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi {
-            param($Uri, $Method, $Body)
+            param($Body)
 
             return @{
                 id = "store-12345678-1234-1234-1234-123456789012"
