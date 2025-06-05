@@ -51,58 +51,101 @@ Describe "Connect-SecretsHub" {
                 & $Module { $script:SecretsHubSession = $null }
             }
 
-            # Mock the private functions
+            # Mock all the required functions with consistent behavior
             Mock -ModuleName CyberArk.SecretsHub Get-SecretsHubBaseUrl {
-                return "https://test.secretshub.cyberark.cloud/"
+                param($Subdomain)
+                return "https://$Subdomain.secretshub.cyberark.cloud/"
             }
+
             Mock -ModuleName CyberArk.SecretsHub Initialize-SecretsHubConnection {
-                return $using:TestSession
+                param($BaseUrl, [PSCredential]$Credential)
+                # Return a consistent test session
+                return [PSCustomObject]@{
+                    BaseUrl = $BaseUrl
+                    Token = "mock-token-12345"
+                    Headers = @{
+                        'Authorization' = "Bearer mock-token-12345"
+                        'Content-Type' = 'application/json'
+                        'Accept' = 'application/json'
+                    }
+                    Connected = $true
+                    ConnectedAt = Get-Date
+                }
             }
-            Mock -ModuleName CyberArk.SecretsHub Write-Information { }
-            Mock -ModuleName CyberArk.SecretsHub Write-Warning { }
-            Mock -ModuleName CyberArk.SecretsHub Test-SecretsHubConnection { }
+
+            Mock -ModuleName CyberArk.SecretsHub Write-Information {
+                param($MessageData, $InformationAction)
+                # Mock the information output
+            }
+            Mock -ModuleName CyberArk.SecretsHub Write-Warning {
+                param($Message)
+                # Mock the warning output
+            }
         }
 
         It "Should connect using subdomain discovery" {
-            Connect-SecretsHub -Subdomain "test"
-            # Verify the mock was called
-            Should -Invoke -ModuleName CyberArk.SecretsHub Get-SecretsHubBaseUrl -Times 1 -ParameterFilter { $Subdomain -eq "test" }
+            $Result = Connect-SecretsHub -Subdomain "test"
+
+            # Verify the discovery function was called with correct subdomain
+            Should -Invoke -ModuleName CyberArk.SecretsHub Get-SecretsHubBaseUrl -Times 1 -ParameterFilter {
+                $Subdomain -eq "test"
+            }
+
+            # Verify connection was initialized
+            Should -Invoke -ModuleName CyberArk.SecretsHub Initialize-SecretsHubConnection -Times 1 -ParameterFilter {
+                $BaseUrl -eq "https://test.secretshub.cyberark.cloud/"
+            }
+
+            # Verify we got a session back
+            $Result | Should -Not -BeNullOrEmpty
+            $Result.Connected | Should -Be $true
         }
 
         It "Should connect using explicit base URL" {
-            Connect-SecretsHub -BaseUrl "https://custom.secretshub.cyberark.cloud"
-            # Verify connection was established
-            Should -Invoke -ModuleName CyberArk.SecretsHub Initialize-SecretsHubConnection -Times 1
+            $BaseUrl = "https://custom.secretshub.cyberark.cloud"
+            $Result = Connect-SecretsHub -BaseUrl $BaseUrl
+
+            # Should NOT call discovery when base URL is provided
+            Should -Invoke -ModuleName CyberArk.SecretsHub Get-SecretsHubBaseUrl -Times 0
+
+            # Should call initialize with the provided URL
+            Should -Invoke -ModuleName CyberArk.SecretsHub Initialize-SecretsHubConnection -Times 1 -ParameterFilter {
+                $BaseUrl -eq "https://custom.secretshub.cyberark.cloud"
+            }
+
+            # Verify we got a session back
+            $Result | Should -Not -BeNullOrEmpty
+            $Result.Connected | Should -Be $true
         }
     }
 }
 
 Describe "New-AwsSecretStore" {
     BeforeEach {
-        # Mock Test-SecretsHubConnection to simulate active connection
+        # Use a more direct approach to mock the session check
         Mock -ModuleName CyberArk.SecretsHub Test-SecretsHubConnection {
-            return $true
+            # Simply return without error to simulate valid connection
         }
 
-        # Mock the session check in the module
-        Mock -ModuleName CyberArk.SecretsHub -CommandName 'Get-Variable' -ParameterFilter { $Name -eq 'script:SecretsHubSession' } {
-            return @{ Value = $using:TestSession }
-        }
-
-        # Mock the API call
+        # Mock the API call with consistent response
         Mock -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi {
+            param($Uri, $Method, $Body, $QueryParameters, $AdditionalHeaders, $Beta, $MaxRetries, $RetryDelay)
+
             return @{
                 id = "store-12345678-1234-1234-1234-123456789012"
                 name = $Body.name
                 type = "AWS_ASM"
                 state = $Body.state
                 data = $Body.data
+                createdAt = "2024-01-01T00:00:00Z"
             }
         }
 
-        # Mock output functions
+        # Mock all output functions
         Mock -ModuleName CyberArk.SecretsHub Write-Information { }
         Mock -ModuleName CyberArk.SecretsHub Write-SecretsHubError { }
+        Mock -ModuleName CyberArk.SecretsHub Write-Error { }
+        Mock -ModuleName CyberArk.SecretsHub Write-Warning { }
     }
 
     Context "Parameter Validation" {
@@ -110,12 +153,9 @@ Describe "New-AwsSecretStore" {
             $Function = Get-Command New-AwsSecretStore
             $Function.Parameters.Keys | Should -Contain 'AccountId'
             $Function.Parameters.Keys | Should -Contain 'Name'
-        }
-
-        It "Should validate AccountId parameter pattern" {
-            $Function = Get-Command New-AwsSecretStore
-            $AccountIdParam = $Function.Parameters['AccountId']
-            $AccountIdParam | Should -Not -BeNullOrEmpty
+            $Function.Parameters.Keys | Should -Contain 'AccountAlias'
+            $Function.Parameters.Keys | Should -Contain 'Region'
+            $Function.Parameters.Keys | Should -Contain 'RoleName'
         }
 
         It "Should validate State parameter set" {
@@ -132,16 +172,22 @@ Describe "New-AwsSecretStore" {
 
             # Verify the API was called correctly
             Should -Invoke -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi -Times 1 -ParameterFilter {
-                $Uri -eq "api/secret-stores" -and $Method -eq "POST" -and $Body.name -eq "TestStore"
+                $Uri -eq "api/secret-stores" -and
+                $Method -eq "POST" -and
+                $Body.name -eq "TestStore" -and
+                $Body.type -eq "AWS_ASM" -and
+                $Body.data.accountId -eq "123456789012" -and
+                $Body.data.roleName -eq "TestRole"
             }
 
             # Verify return value
+            $Result | Should -Not -BeNullOrEmpty
             $Result.name | Should -Be "TestStore"
             $Result.type | Should -Be "AWS_ASM"
         }
 
         It "Should include description when provided" {
-            New-AwsSecretStore -Name "TestStore" -Description "Test Description" -AccountId "123456789012" -AccountAlias "test-alias" -Region "us-east-1" -RoleName "TestRole"
+            New-AwsSecretStore -Name "TestStore" -Description "Test Description" -AccountId "123456789012" -AccountAlias "test-alias" -Region "us-east-1" -RoleName "TestRole" | Out-Null
 
             Should -Invoke -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi -Times 1 -ParameterFilter {
                 $Body.description -eq "Test Description"
@@ -152,49 +198,55 @@ Describe "New-AwsSecretStore" {
 
 Describe "Get-SecretStore" {
     BeforeEach {
-        # Create a more robust session mock approach
-        # This ensures the session check passes on all platforms
-        Mock -ModuleName CyberArk.SecretsHub -CommandName 'Test-Path' -ParameterFilter { $Path -like '*SecretsHubSession*' } {
-            return $true
-        }
+        # Use a completely different approach - mock at the module level
+        # This approach should work consistently across platforms
 
-        # Alternative approach: Mock the entire connection test
-        Mock -ModuleName CyberArk.SecretsHub Test-SecretsHubConnection {
-            # Just return without throwing, simulating a valid connection
-            return
-        }
+        # Mock the connection validation to always pass
+        Mock -ModuleName CyberArk.SecretsHub Test-SecretsHubConnection { }
 
-        # Mock the session access by overriding the script variable check
-        # This is the key fix - we need to ensure the session variable exists
+        # Set session directly in module scope using InvokeScript
         $Module = Get-Module CyberArk.SecretsHub
         if ($Module) {
-            try {
-                # Set the session variable directly in the module's scope
-                & $Module {
-                    param($TestSession)
-                    $script:SecretsHubSession = $TestSession
-                } $script:TestSession
-            } catch {
-                Write-Warning "Could not set session in module scope: $_"
-            }
+            $Module.Invoke({
+                param($TestSession)
+                $script:SecretsHubSession = $TestSession
+            }, $script:TestSession)
         }
 
-        # Mock the API calls with more specific responses
+        # Mock the API calls with detailed responses
         Mock -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi {
-            # Determine response based on URI pattern
-            switch -Regex ($Uri) {
-                'api/secret-stores/store-.*' {
-                    # Single store request (by ID)
+            param($Uri, $Method, $Body, $QueryParameters, $AdditionalHeaders, $Beta, $MaxRetries, $RetryDelay)
+
+            # Return response based on URI pattern and query parameters
+            if ($Uri -match 'api/secret-stores/store-.*') {
+                # Single store request (by ID)
+                return @{
+                    id = "store-12345678-1234-1234-1234-123456789012"
+                    name = "TestStore"
+                    type = "AWS_ASM"
+                    state = @{ current = "ENABLED" }
+                    createdAt = "2024-01-01T00:00:00Z"
+                }
+            }
+            elseif ($Uri -eq 'api/secret-stores') {
+                # List stores request - check behavior parameter
+                $Behavior = $QueryParameters.behavior
+
+                if ($Behavior -eq 'SECRETS_SOURCE') {
                     return @{
-                        id = "store-12345678-1234-1234-1234-123456789012"
-                        name = "TestStore"
-                        type = "AWS_ASM"
-                        state = @{ current = "ENABLED" }
-                        createdAt = "2024-01-01T00:00:00Z"
+                        secretStores = @(
+                            @{
+                                id = "store-source-123"
+                                name = "SourceStore"
+                                type = "PAM_SELF_HOSTED"
+                                state = @{ current = "ENABLED" }
+                                createdAt = "2024-01-01T00:00:00Z"
+                            }
+                        )
                     }
                 }
-                'api/secret-stores$' {
-                    # List stores request
+                else {
+                    # SECRETS_TARGET or default
                     return @{
                         secretStores = @(
                             @{
@@ -207,17 +259,18 @@ Describe "Get-SecretStore" {
                         )
                     }
                 }
-                default {
-                    return @{ secretStores = @() }
-                }
+            }
+            else {
+                # Fallback empty response
+                return @{ secretStores = @() }
             }
         }
 
-        # Mock error handling function
-        Mock -ModuleName CyberArk.SecretsHub Write-SecretsHubError { }
+        # Mock all output functions
         Mock -ModuleName CyberArk.SecretsHub Write-Error { }
         Mock -ModuleName CyberArk.SecretsHub Write-Warning { }
         Mock -ModuleName CyberArk.SecretsHub Write-Verbose { }
+        Mock -ModuleName CyberArk.SecretsHub Write-Information { }
     }
 
     Context "Get by ID" {
@@ -227,6 +280,7 @@ Describe "Get-SecretStore" {
             $Store | Should -Not -BeNullOrEmpty
             $Store.id | Should -Be "store-12345678-1234-1234-1234-123456789012"
             $Store.name | Should -Be "TestStore"
+            $Store.type | Should -Be "AWS_ASM"
 
             Should -Invoke -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi -Times 1 -ParameterFilter {
                 $Uri -eq "api/secret-stores/store-12345678-1234-1234-1234-123456789012" -and $Method -eq "GET"
@@ -242,6 +296,7 @@ Describe "Get-SecretStore" {
             $Stores | Should -Not -BeNullOrEmpty
             $Stores.Count | Should -Be 1
             $Stores[0].name | Should -Be "TestStore"
+            $Stores[0].type | Should -Be "AWS_ASM"
 
             Should -Invoke -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi -Times 1 -ParameterFilter {
                 $Uri -eq "api/secret-stores" -and
@@ -254,6 +309,9 @@ Describe "Get-SecretStore" {
             $Stores = Get-SecretStore -Behavior "SECRETS_SOURCE"
 
             $Stores | Should -Not -BeNullOrEmpty
+            $Stores.Count | Should -Be 1
+            $Stores[0].name | Should -Be "SourceStore"
+            $Stores[0].type | Should -Be "PAM_SELF_HOSTED"
 
             Should -Invoke -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi -Times 1 -ParameterFilter {
                 $Uri -eq "api/secret-stores" -and
@@ -263,37 +321,17 @@ Describe "Get-SecretStore" {
         }
 
         It "Should handle -All parameter correctly" {
-            # Mock both API calls for the -All parameter
-            Mock -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi {
-                return @{
-                    secretStores = @(
-                        @{
-                            id = "store-source-123"
-                            name = "SourceStore"
-                            type = "PAM_SELF_HOSTED"
-                            state = @{ current = "ENABLED" }
-                        }
-                    )
-                }
-            } -ParameterFilter { $QueryParameters.behavior -eq "SECRETS_SOURCE" }
-
-            Mock -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi {
-                return @{
-                    secretStores = @(
-                        @{
-                            id = "store-target-456"
-                            name = "TargetStore"
-                            type = "AWS_ASM"
-                            state = @{ current = "ENABLED" }
-                        }
-                    )
-                }
-            } -ParameterFilter { $QueryParameters.behavior -eq "SECRETS_TARGET" }
-
             $AllStores = Get-SecretStore -All
 
             $AllStores | Should -Not -BeNullOrEmpty
             $AllStores.Count | Should -Be 2
+
+            # Should have both source and target stores
+            $SourceStores = $AllStores | Where-Object { $_.type -eq "PAM_SELF_HOSTED" }
+            $TargetStores = $AllStores | Where-Object { $_.type -eq "AWS_ASM" }
+
+            $SourceStores.Count | Should -Be 1
+            $TargetStores.Count | Should -Be 1
 
             # Should call both source and target APIs
             Should -Invoke -ModuleName CyberArk.SecretsHub Invoke-SecretsHubApi -Times 1 -ParameterFilter {
