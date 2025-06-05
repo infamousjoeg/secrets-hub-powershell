@@ -64,7 +64,7 @@ function Initialize-SecretsHubConnection {
                 Write-Verbose "Testing connection with: $TestUri"
                 $TestResult = Invoke-RestMethod -Uri $TestUri -Headers $Session.Headers -Method GET -ErrorAction Stop
                 Write-Verbose "Connection test successful"
-                
+
                 # Return the test result as well for the caller to use
                 $Session | Add-Member -NotePropertyName 'TestResult' -NotePropertyValue $TestResult
             }

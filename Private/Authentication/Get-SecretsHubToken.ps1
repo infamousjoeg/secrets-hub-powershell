@@ -20,19 +20,19 @@ function Get-SecretsHubToken {
                 try {
                     Write-Verbose "Attempting to retrieve IdentityCommand session"
                     $IdentitySession = Get-IDSession -ErrorAction SilentlyContinue
-                    
+
                     if ($IdentitySession) {
                         Write-Verbose "Found IdentityCommand session for user: $($IdentitySession.User)"
-                        
+
                         # The key insight: LastCommandResults might be a web response object
                         # Let's try multiple approaches to extract the token
-                        
+
                         $Token = $null
-                        
+
                         # Approach 1: Direct extraction from LastCommandResults
                         if ($IdentitySession.LastCommandResults) {
                             Write-Verbose "Attempting to extract token from LastCommandResults"
-                            
+
                             try {
                                 # If it's already a string/JSON, parse it directly
                                 if ($IdentitySession.LastCommandResults -is [string]) {
@@ -49,7 +49,7 @@ function Get-SecretsHubToken {
                                         $TokenData = $IdentitySession.LastCommandResults | ConvertFrom-Json -ErrorAction Stop
                                     }
                                 }
-                                
+
                                 # Extract token from the parsed data
                                 if ($TokenData.Result -and $TokenData.Result.Token) {
                                     $Token = $TokenData.Result.Token
@@ -61,12 +61,12 @@ function Get-SecretsHubToken {
                                     $Token = $TokenData.token
                                     Write-Verbose "Successfully extracted token from token (length: $($Token.Length))"
                                 }
-                                
+
                             } catch {
                                 Write-Verbose "Could not parse LastCommandResults as JSON: $($_.Exception.Message)"
                             }
                         }
-                        
+
                         # Approach 2: Try the same manual extraction that worked
                         if (-not $Token) {
                             Write-Verbose "Trying manual extraction approach that worked in testing"
@@ -82,13 +82,13 @@ function Get-SecretsHubToken {
                                 Write-Verbose "Manual extraction approach failed: $($_.Exception.Message)"
                             }
                         }
-                        
+
                         # Approach 3: Check for direct Token property on session
                         if (-not $Token -and $IdentitySession.Token) {
                             Write-Verbose "Using IdentityCommand session Token property"
                             $Token = $IdentitySession.Token
                         }
-                        
+
                         # Validate and return token
                         if ($Token) {
                             # Validate JWT format
@@ -100,16 +100,16 @@ function Get-SecretsHubToken {
                                 return $Token
                             }
                         }
-                        
+
                         # If we get here, token extraction failed
                         Write-Warning "IdentityCommand session found but no token could be extracted"
                         Write-Verbose "Session properties: $($IdentitySession.PSObject.Properties.Name -join ', ')"
-                        
+
                         # Provide debugging info
                         if ($IdentitySession.LastCommandResults) {
                             $ResultType = $IdentitySession.LastCommandResults.GetType().FullName
                             Write-Verbose "LastCommandResults type: $ResultType"
-                            
+
                             if ($IdentitySession.LastCommandResults -is [string]) {
                                 Write-Verbose "LastCommandResults length: $($IdentitySession.LastCommandResults.Length)"
                             }

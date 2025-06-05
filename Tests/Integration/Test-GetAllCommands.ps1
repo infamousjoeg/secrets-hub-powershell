@@ -109,11 +109,11 @@ function Invoke-TestCommand {
         $Result = & $ScriptBlock
         $EndTime = Get-Date
         $Duration = ($EndTime - $StartTime).TotalMilliseconds
-        
+
         $ResultCount = if ($Result) {
             if ($Result -is [array]) { $Result.Count } else { 1 }
         } else { 0 }
-        
+
         $SampleData = if ($Detailed -and $Result) {
             if ($Result -is [array] -and $Result.Count -gt 0) {
                 $Result[0] | Select-Object -Property * -First 1
@@ -121,26 +121,26 @@ function Invoke-TestCommand {
                 $Result | Select-Object -Property * -First 1
             }
         } else { $null }
-        
+
         $TestResult = New-TestResult -Command $CommandName -ParameterSet $ParameterSetName -Status "Success" -Message "Retrieved $ResultCount items" -ResultCount $ResultCount -Duration $Duration -SampleData $SampleData
-        
+
         Write-Output "    ✓ Success: $ResultCount items ($([math]::Round($Duration, 2))ms)" -ForegroundColor Green
-        
+
         if ($Detailed -and $SampleData) {
             Write-Output "    Sample data: $($SampleData | ConvertTo-Json -Compress)" -ForegroundColor DarkGreen
         }
-        
+
         return $TestResult
     }
     catch {
         $EndTime = Get-Date
         $Duration = ($EndTime - $StartTime).TotalMilliseconds
         $ErrorMessage = $_.Exception.Message
-        
+
         $TestResult = New-TestResult -Command $CommandName -ParameterSet $ParameterSetName -Status "Failed" -Message $ErrorMessage -Duration $Duration -ErrorDetails $_
-        
+
         Write-Output "    ✗ Failed: $ErrorMessage ($([math]::Round($Duration, 2))ms)" -ForegroundColor Red
-        
+
         return $TestResult
     }
 }
@@ -272,16 +272,16 @@ try {
     $Secrets = Get-Secret -Limit 1 -ErrorAction SilentlyContinue
     if ($Secrets -and $Secrets.Count -gt 0) {
         # Try different possible ID field names
-        $TestSecretId = if ($Secrets[0].id) { 
-            $Secrets[0].id 
-        } elseif ($Secrets[0].secretId) { 
-            $Secrets[0].secretId 
-        } elseif ($Secrets[0].externalId) { 
-            $Secrets[0].externalId 
-        } else { 
-            $null 
+        $TestSecretId = if ($Secrets[0].id) {
+            $Secrets[0].id
+        } elseif ($Secrets[0].secretId) {
+            $Secrets[0].secretId
+        } elseif ($Secrets[0].externalId) {
+            $Secrets[0].externalId
+        } else {
+            $null
         }
-        
+
         if ($TestSecretId) {
             Write-Output "`nTesting Get-SecretValue (Beta)..." -ForegroundColor Magenta
             Write-Output "   ⚠️  WARNING: This will retrieve actual secret values!" -ForegroundColor Yellow
@@ -329,7 +329,7 @@ if ($PerformanceTest) {
         $AvgDuration = ($SuccessfulTests | Measure-Object -Property Duration -Average).Average
         $FastestTest = $SuccessfulTests | Sort-Object Duration | Select-Object -First 1
         $SlowestTest = $SuccessfulTests | Sort-Object Duration -Descending | Select-Object -First 1
-        
+
         Write-Output "Average Duration: $([math]::Round($AvgDuration, 2))ms" -ForegroundColor White
         Write-Output "Fastest: $($FastestTest.Command) ($($FastestTest.ParameterSet)) - $([math]::Round($FastestTest.Duration, 2))ms" -ForegroundColor Green
         Write-Output "Slowest: $($SlowestTest.Command) ($($SlowestTest.ParameterSet)) - $([math]::Round($SlowestTest.Duration, 2))ms" -ForegroundColor Yellow
