@@ -7,6 +7,8 @@ Central function for making API calls with error handling and retry logic.
 #>
 function Invoke-SecretsHubApi {
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'MaxRetries')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'RetryDelay')]
     param(
         [Parameter(Mandatory = $true)]
         [string]$Uri,
@@ -28,7 +30,7 @@ function Invoke-SecretsHubApi {
 
     # Check session exists
     if (-not $script:SecretsHubSession) {
-        throw "Not connected to Secrets Hub. Use Connect-SecretsHub first."
+        throw "Not connected to Secrets Hub. Use New-IdSession first."
     }
 
     # Check BaseUrl exists
@@ -47,7 +49,7 @@ function Invoke-SecretsHubApi {
         $CleanBaseUrl = $BaseUrl.TrimEnd('/')
         $CleanUri = [string]$Uri.TrimStart('/')
         $FullUri = "$CleanBaseUrl/$CleanUri"
-        
+
         # Add query parameters if present
         if ($QueryParameters -and $QueryParameters.Count -gt 0) {
             $QueryParts = @()
@@ -57,26 +59,26 @@ function Invoke-SecretsHubApi {
             $QueryString = $QueryParts -join '&'
             $FullUri = $FullUri + "?" + $QueryString
         }
-        
+
         Write-Verbose "Complete URI: $FullUri"
-        
+
         # Prepare headers
         $Headers = @{
             'Authorization' = $script:SecretsHubSession.Headers['Authorization']
             'Content-Type' = 'application/json'
             'Accept' = 'application/json'
         }
-        
+
         if ($Beta) {
             $Headers['Accept'] = 'application/x.secretshub.beta+json'
         }
-        
+
         if ($AdditionalHeaders) {
             foreach ($header in $AdditionalHeaders.GetEnumerator()) {
                 $Headers[$header.Key] = $header.Value
             }
         }
-        
+
         # Prepare request
         $RequestParams = @{
             Uri = $FullUri
@@ -84,11 +86,11 @@ function Invoke-SecretsHubApi {
             Headers = $Headers
             ErrorAction = 'Stop'
         }
-        
+
         if ($Body) {
             $RequestParams.Body = ($Body | ConvertTo-Json -Depth 10 -Compress)
         }
-        
+
         # Make the call
         Write-Verbose "Making API call: $Method $FullUri"
         $Response = Invoke-RestMethod @RequestParams
