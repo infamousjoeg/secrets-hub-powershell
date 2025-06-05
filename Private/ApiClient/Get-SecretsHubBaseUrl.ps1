@@ -21,13 +21,13 @@ function Get-SecretsHubBaseUrl {
             $Response = Invoke-RestMethod -Uri $DiscoveryUrl -Method GET -ErrorAction Stop
 
             # Look for Secrets Hub service
-            $SecretsHubService = $Response.services | Where-Object { $_.name -eq 'secretshub' }
+            $SecretsHubService = $Response.secrets_hub.api -replace '/api$', ''
 
             if (-not $SecretsHubService) {
                 throw "Secrets Hub service not found for subdomain: $Subdomain"
             }
 
-            $BaseUrl = $SecretsHubService.url
+            $BaseUrl = $SecretsHubService
 
             if (-not $BaseUrl.EndsWith('/')) {
                 $BaseUrl += '/'
@@ -38,7 +38,7 @@ function Get-SecretsHubBaseUrl {
         }
         catch {
             # Fallback to standard URL format
-            $FallbackUrl = "https://$Subdomain.secretshub.cyberark.cloud/"
+            $FallbackUrl = "https://$Subdomain.secretshub.cyberark.cloud"
             Write-Warning "Platform discovery failed, using fallback URL: $FallbackUrl"
             Write-Error "Discovery failed: $($_.Exception.Message)" -ErrorAction Continue
             return $FallbackUrl

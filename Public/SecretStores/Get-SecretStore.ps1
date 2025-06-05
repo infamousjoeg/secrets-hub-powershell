@@ -29,11 +29,11 @@ Get-SecretStore -Behavior SECRETS_TARGET -Filter "type EQ AWS_ASM"
 .NOTES
 Requires an active Secrets Hub connection.
 #>
-# Override the function with a clean implementation
 function Get-SecretStore {
     [CmdletBinding(DefaultParameterSetName = 'List')]
     param(
         [Parameter(Mandatory = $true, ParameterSetName = 'ById')]
+        [ValidateNotNullOrEmpty()]
         [string]$StoreId,
 
         [Parameter(ParameterSetName = 'List')]
@@ -43,50 +43,81 @@ function Get-SecretStore {
         [Parameter(ParameterSetName = 'List')]
         [string]$Filter,
 
-        [Parameter(ParameterSetName = 'All')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'All')]
         [switch]$All
     )
 
-    # Ensure we have a connection
-    if (-not $script:SecretsHubSession) {
-        throw "Not connected to Secrets Hub. Use Connect-SecretsHub first."
+    begin {
+        # Ensure we have a connection
+        if (-not $script:SecretsHubSession) {
+            throw "Not connected to Secrets Hub. Use Connect-SecretsHub first."
+        }
+        
+        Write-Verbose "Get-SecretStore called with ParameterSet: $($PSCmdlet.ParameterSetName)"
     }
 
-    try {
-        if ($PSCmdlet.ParameterSetName -eq 'ById') {
-            Write-Verbose "Getting secret store by ID: $StoreId"
-            $Result = Invoke-SecretsHubApi -Uri "api/secret-stores/$StoreId" -Method GET
-            return $Result
+    process {
+        try {
+            switch ($PSCmdlet.ParameterSetName) {
+                'ById' {
+                    Write-Verbose "Getting secret store by ID: $StoreId"
+                    $Result = Invoke-SecretsHubApi -Uri "api/secret-stores/$StoreId" -Method GET
+                    return $Result
+                }
+                
+                'All' {
+                    Write-Verbose "Getting all secret stores"
+                    
+                    $AllStores = @()
+                    
+                    # Get source stores
+                    try {
+                        Write-Verbose "Retrieving SECRETS_SOURCE stores"
+                        $SourceResult = Invoke-SecretsHubApi -Uri "api/secret-stores" -Method GET -QueryParameters @{behavior = 'SECRETS_SOURCE'}
+                        if ($SourceResult -and $SourceResult.secretStores) {
+                            $AllStores += $SourceResult.secretStores
+                            Write-Verbose "Found $($SourceResult.secretStores.Count) source stores"
+                        }
+                    }
+                    catch {
+                        Write-Warning "Could not retrieve SECRETS_SOURCE stores: $($_.Exception.Message)"
+                    }
+                    
+                    # Get target stores
+                    try {
+                        Write-Verbose "Retrieving SECRETS_TARGET stores"
+                        $TargetResult = Invoke-SecretsHubApi -Uri "api/secret-stores" -Method GET -QueryParameters @{behavior = 'SECRETS_TARGET'}
+                        if ($TargetResult -and $TargetResult.secretStores) {
+                            $AllStores += $TargetResult.secretStores
+                            Write-Verbose "Found $($TargetResult.secretStores.Count) target stores"
+                        }
+                    }
+                    catch {
+                        Write-Warning "Could not retrieve SECRETS_TARGET stores: $($_.Exception.Message)"
+                    }
+                    
+                    Write-Verbose "Total stores retrieved: $($AllStores.Count)"
+                    return $AllStores
+                }
+                
+                'List' {
+                    Write-Verbose "Getting secret stores with behavior: $Behavior"
+                    $QueryParams = @{ behavior = $Behavior }
+                    if ($Filter) { 
+                        $QueryParams.filter = $Filter 
+                        Write-Verbose "Applied filter: $Filter"
+                    }
+                    
+                    $Result = Invoke-SecretsHubApi -Uri "api/secret-stores" -Method GET -QueryParameters $QueryParams
+                    $Stores = if ($Result -and $Result.secretStores) { $Result.secretStores } else { @() }
+                    Write-Verbose "Found $($Stores.Count) stores"
+                    return $Stores
+                }
+            }
         }
-        elseif ($PSCmdlet.ParameterSetName -eq 'All') {
-            Write-Verbose "Getting all secret stores"
-            
-            # Get source stores
-            $SourceResult = Invoke-SecretsHubApi -Uri "api/secret-stores" -Method GET -QueryParameters @{behavior = 'SECRETS_SOURCE'}
-            $SourceStores = if ($SourceResult -and $SourceResult.secretStores) { $SourceResult.secretStores } else { @() }
-            
-            # Get target stores
-            $TargetResult = Invoke-SecretsHubApi -Uri "api/secret-stores" -Method GET -QueryParameters @{behavior = 'SECRETS_TARGET'}
-            $TargetStores = if ($TargetResult -and $TargetResult.secretStores) { $TargetResult.secretStores } else { @() }
-            
-            # Combine results
-            $AllStores = @()
-            if ($SourceStores) { $AllStores += $SourceStores }
-            if ($TargetStores) { $AllStores += $TargetStores }
-            
-            return $AllStores
+        catch {
+            Write-Error "Failed to get secret stores: $($_.Exception.Message)"
+            throw
         }
-        else {
-            Write-Verbose "Getting secret stores with behavior: $Behavior"
-            $QueryParams = @{ behavior = $Behavior }
-            if ($Filter) { $QueryParams.filter = $Filter }
-            
-            $Result = Invoke-SecretsHubApi -Uri "api/secret-stores" -Method GET -QueryParameters $QueryParams
-            return if ($Result -and $Result.secretStores) { $Result.secretStores } else { @() }
-        }
-    }
-    catch {
-        Write-Error "Failed to get secret stores: $($_.Exception.Message)"
-        throw
     }
 }
